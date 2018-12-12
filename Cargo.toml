@@ -1,0 +1,14 @@
+[package]
+authors = ["Aaron Turon <aturon@mozilla.com>"]
+description = "Types and traits for standardizing async HTTP services"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+name = "http-service"
+version = "0.0.0"
+
+[dependencies]
+bytes = "0.4.11"
+http = "0.1.13"
+
+[dependencies.futures-preview]
+version = "0.3.0-alpha.10"
