@@ -1,7 +1,4 @@
 # http-service
-<<<<<<< HEAD
-Types and traits for http-based services using the latest futures API
-=======
 
 [![build status][1]][2]
 
@@ -14,4 +11,3 @@ and services that use them. The interface is based on the `std::futures` API.
 
 [1]: https://img.shields.io/travis/rust-net-web/http-service.svg?style=flat-square
 [2]: https://travis-ci.org/rust-net-web/http-service
->>>>>>> Initial commit
