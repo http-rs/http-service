@@ -1,6 +1,7 @@
+//! Types and traits giving an interface between low-level http server implementations
+//! and services that use them. The interface is based on the `std::futures` API.
+
 #![cfg_attr(feature = "nightly", deny(missing_docs))]
-#![cfg_attr(feature = "nightly", feature(external_doc))]
-#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(test, deny(warnings))]
 #![feature(pin, futures_api, async_await, await_macro, arbitrary_self_types)]
 
@@ -57,28 +58,58 @@ impl Stream for Body {
     }
 }
 
+/// An HTTP request with a streaming body.
 pub type Request = http::Request<Body>;
+
+/// An HTTP response with a streaming body.
 pub type Response = http::Request<Body>;
 
+/// The only possible service-level error, which tells the HTTP server to
+/// hang up the connection.
+///
+/// Any logging or other error handling should be separately arranged prior
+/// to returning a `HangUp`.
+#[derive(Debug, Clone)]
 pub struct HangUp;
 
 /// An async HTTP service
 ///
-/// An instance of a type implementing this trait represents a single open
-/// connection, and may carry connection-specific state within it.
+/// An instance represents a service as a whole. The associated `Conn` type
+/// represents a particular connection, and may carry connection-specific state.
 pub trait HttpService {
-    type Conn;
-    type ConnFut: TryFuture<Ok = Self::Conn, Error = HangUp>;
-    fn connect(&self) -> Self::ConnFut;
+    /// An individual connection.
+    ///
+    /// This associated type is used to establish and hold any per-connection state
+    /// needed by the service.
+    type Connection;
+
+    /// A future for setting up an individual connection.
+    ///
+    /// This method is called each time the server receives a new connection request,
+    /// but before actually exchanging any data with the client.
+    ///
+    /// Returning a `HangUp` error will result in the server immediately dropping
+    /// the connection.
+    type ConnectionFuture: TryFuture<Ok = Self::Connection, Error = HangUp>;
+
+    /// Initiate a new connection.
+    ///
+    /// This method is given access to the global service (`&self`), which may provide
+    /// handles to connection pools, thread pools, or other global data.
+    fn connect(&self) -> Self::ConnectionFuture;
 
     /// The async computation for producing the response.
     ///
-    /// This API does *not* use `Result`; servers are expect to always issue
-    /// a valid response to the current request.
+    /// Returning a `HangUp` error will result in the server immediately dropping
+    /// the connection. It is usually preferable to instead return an HTTP response
+    /// with an error status code.
     type Fut: TryFuture<Ok = Response, Error = HangUp>;
 
-    /// Begin handling a single request
-    fn respond(&self, conn: &mut Self::Conn, req: Request) -> Self::Fut;
+    /// Begin handling a single request.
+    ///
+    /// The handler is given shared access to the service itself, and mutable access
+    /// to the state for the connection where the request is taking place.
+    fn respond(&self, conn: &mut Self::Connection, req: Request) -> Self::Fut;
 }
 
 impl<F, Fut> HttpService for F
@@ -86,9 +117,9 @@ where
     F: Fn(Request) -> Fut,
     Fut: TryFuture<Ok = Response, Error = HangUp>,
 {
-    type Conn = ();
-    type ConnFut = future::Ready<Result<(), HangUp>>;
-    fn connect(&self) -> Self::ConnFut {
+    type Connection = ();
+    type ConnectionFuture = future::Ready<Result<(), HangUp>>;
+    fn connect(&self) -> Self::ConnectionFuture {
         future::ok(())
     }
 
