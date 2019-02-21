@@ -3,7 +3,7 @@
 
 #![cfg_attr(feature = "nightly", deny(missing_docs))]
 #![cfg_attr(test, deny(warnings))]
-#![feature(pin, futures_api, async_await, await_macro, arbitrary_self_types)]
+#![feature(futures_api, async_await, await_macro, arbitrary_self_types)]
 
 use bytes::Bytes;
 use futures::{
@@ -62,35 +62,27 @@ impl Stream for Body {
 pub type Request = http::Request<Body>;
 
 /// An HTTP response with a streaming body.
-pub type Response = http::Request<Body>;
-
-/// The only possible service-level error, which tells the HTTP server to
-/// hang up the connection.
-///
-/// Any logging or other error handling should be separately arranged prior
-/// to returning a `HangUp`.
-#[derive(Debug, Clone)]
-pub struct HangUp;
+pub type Response = http::Response<Body>;
 
 /// An async HTTP service
 ///
 /// An instance represents a service as a whole. The associated `Conn` type
 /// represents a particular connection, and may carry connection-specific state.
-pub trait HttpService {
+pub trait HttpService: Send + Sync + 'static {
     /// An individual connection.
     ///
     /// This associated type is used to establish and hold any per-connection state
     /// needed by the service.
-    type Connection;
+    type Connection: Send + 'static;
 
     /// A future for setting up an individual connection.
     ///
     /// This method is called each time the server receives a new connection request,
     /// but before actually exchanging any data with the client.
     ///
-    /// Returning a `HangUp` error will result in the server immediately dropping
+    /// Returning an error will result in the server immediately dropping
     /// the connection.
-    type ConnectionFuture: TryFuture<Ok = Self::Connection, Error = HangUp>;
+    type ConnectionFuture: Send + 'static + TryFuture<Ok = Self::Connection>;
 
     /// Initiate a new connection.
     ///
@@ -100,10 +92,10 @@ pub trait HttpService {
 
     /// The async computation for producing the response.
     ///
-    /// Returning a `HangUp` error will result in the server immediately dropping
+    /// Returning an error will result in the server immediately dropping
     /// the connection. It is usually preferable to instead return an HTTP response
     /// with an error status code.
-    type Fut: TryFuture<Ok = Response, Error = HangUp>;
+    type Fut: Send + 'static + TryFuture<Ok = Response>;
 
     /// Begin handling a single request.
     ///
@@ -114,11 +106,12 @@ pub trait HttpService {
 
 impl<F, Fut> HttpService for F
 where
-    F: Fn(Request) -> Fut,
-    Fut: TryFuture<Ok = Response, Error = HangUp>,
+    F: Send + Sync + 'static + Fn(Request) -> Fut,
+    Fut: Send + 'static + TryFuture<Ok = Response>,
+    Fut::Error: Send,
 {
     type Connection = ();
-    type ConnectionFuture = future::Ready<Result<(), HangUp>>;
+    type ConnectionFuture = future::Ready<Result<(), Fut::Error>>;
     fn connect(&self) -> Self::ConnectionFuture {
         future::ok(())
     }
