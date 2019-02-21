@@ -1,6 +1,7 @@
 [package]
 authors = ["Aaron Turon <aturon@mozilla.com>"]
 description = "Types and traits for standardizing async HTTP services"
+repository = "https://github.com/rust-net-web/http-service"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service"
