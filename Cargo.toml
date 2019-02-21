@@ -4,7 +4,7 @@ description = "Types and traits for standardizing async HTTP services"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service"
-version = "0.1.1"
+version = "0.1.2"
 
 [dependencies]
 bytes = "0.4.11"
