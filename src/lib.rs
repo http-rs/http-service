@@ -10,7 +10,7 @@ use futures::{
     future,
     prelude::*,
     stream::{self, StreamObj},
-    task::LocalWaker,
+    task::Waker,
     Poll,
 };
 
@@ -53,8 +53,8 @@ impl Unpin for Body {}
 
 impl Stream for Body {
     type Item = Result<Bytes, std::io::Error>;
-    fn poll_next(mut self: Pin<&mut Self>, lw: &LocalWaker) -> Poll<Option<Self::Item>> {
-        Pin::new(&mut self.stream).poll_next(lw)
+    fn poll_next(mut self: Pin<&mut Self>, waker: &Waker) -> Poll<Option<Self::Item>> {
+        Pin::new(&mut self.stream).poll_next(waker)
     }
 }
 
