@@ -43,7 +43,7 @@ impl Body {
     }
 
     /// Reads the stream into a new `Vec`.
-    pub async fn to_vec(mut self) -> std::io::Result<Vec<u8>> {
+    pub async fn into_vec(mut self) -> std::io::Result<Vec<u8>> {
         let mut bytes = Vec::new();
         while let Some(chunk) = await!(self.next()) {
             bytes.extend(chunk?);
