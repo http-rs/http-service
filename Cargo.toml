@@ -7,6 +7,9 @@ license = "MIT OR Apache-2.0"
 name = "http-service"
 version = "0.1.4"
 
+[workspace]
+members = ["http-service-hyper"]
+
 [dependencies]
 bytes = "0.4.11"
 http = "0.1.13"
