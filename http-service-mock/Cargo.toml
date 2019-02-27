@@ -4,11 +4,11 @@ description = "Creates a HttpService server mock to test requests/responses agai
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service-mock"
+repository = "https://github.com/rust-net-web/http-service"
 version = "0.1.0"
 
 [dependencies]
 http-service = "0.1.4"
 
 [dependencies.futures-preview]
-features = ["compat"]
 version = "0.3.0-alpha.13"
