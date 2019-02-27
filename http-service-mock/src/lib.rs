@@ -27,6 +27,6 @@ impl<T: HttpService> TestBackend<T> {
     }
 }
 
-pub fn make_server(service: HttpService) -> TestBackend<HttpService> {
+pub fn make_server(service: HttpService) -> TestBackend<F> {
     TestBackend::wrap(service).unwrap()
 }
