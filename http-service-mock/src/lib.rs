@@ -1,5 +1,4 @@
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
-#![feature(futures_api, async_await, await_macro, arbitrary_self_types)]
+#![feature(futures_api, async_await)]
 
 use futures::{executor::block_on, prelude::*};
 use http_service::{HttpService, Request, Response};
@@ -27,6 +26,6 @@ impl<T: HttpService> TestBackend<T> {
     }
 }
 
-pub fn make_server(T: HttpService) -> TestBackend<T::ConnectionFuture> {
-    TestBackend::wrap(T).unwrap()
+pub fn make_server<T: HttpService> (service: T) -> Result<TestBackend<T>, <T::ConnectionFuture as TryFuture>::Error> {
+    TestBackend::wrap(service)
 }
