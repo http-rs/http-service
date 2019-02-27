@@ -1,5 +1,8 @@
 [package]
-authors = ["Bastian Gruber <gruberbastian@me.com>"]
+authors = [
+    "Bastian Gruber <gruberbastian@me.com>",
+    "Wonwoo Choi <chwo9843@gmail.com>",
+]
 description = "Creates a HttpService server mock to test requests/responses against your app"
 edition = "2018"
 license = "MIT OR Apache-2.0"
