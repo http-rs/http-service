@@ -8,7 +8,7 @@ name = "http-service"
 version = "0.1.4"
 
 [workspace]
-members = ["http-service-hyper"]
+members = ["http-service-hyper", "http-service-mock"]
 
 [dependencies]
 bytes = "0.4.11"
