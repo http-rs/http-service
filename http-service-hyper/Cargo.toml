@@ -14,8 +14,8 @@ version = "0.1.0"
 [dependencies]
 http = "0.1"
 http-service = "0.1.4"
-hyper = "0.12.24"
+hyper = "0.12.27"
 
 [dependencies.futures-preview]
 features = ["compat"]
-version = "0.3.0-alpha.13"
+version = "0.3.0-alpha.14"

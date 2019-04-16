@@ -14,4 +14,4 @@ version = "0.1.0"
 http-service = "0.1.4"
 
 [dependencies.futures-preview]
-version = "0.3.0-alpha.13"
+version = "0.3.0-alpha.14"
