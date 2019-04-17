@@ -24,6 +24,7 @@ use std::pin::Pin;
 /// A body is a stream of `Bytes` values, which are shared handles to byte buffers.
 /// Both `Body` and `Bytes` values can be easily created from standard owned byte buffer types
 /// like `Vec<u8>` or `String`, using the `From` trait.
+#[derive(Debug)]
 pub struct Body {
     stream: StreamObj<'static, Result<Bytes, std::io::Error>>,
 }
@@ -64,7 +65,7 @@ impl Unpin for Body {}
 
 impl Stream for Body {
     type Item = Result<Bytes, std::io::Error>;
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         Pin::new(&mut self.stream).poll_next(cx)
     }
 }

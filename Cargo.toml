@@ -5,7 +5,7 @@ repository = "https://github.com/rust-net-web/http-service"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service"
-version = "0.1.4"
+version = "0.1.5"
 
 [workspace]
 members = ["http-service-hyper", "http-service-mock"]
