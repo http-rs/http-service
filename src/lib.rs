@@ -1,7 +1,9 @@
 //! Types and traits giving an interface between low-level http server implementations
 //! and services that use them. The interface is based on the `std::futures` API.
 
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
+#![forbid(future_incompatible, rust_2018_idioms)]
+#![deny(missing_debug_implementations, nonstandard_style)]
+#![warn(missing_docs, missing_doc_code_examples)]
 #![cfg_attr(test, deny(warnings))]
 #![feature(futures_api, async_await, await_macro, arbitrary_self_types)]
 

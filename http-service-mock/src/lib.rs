@@ -1,3 +1,7 @@
+#![forbid(future_incompatible, rust_2018_idioms)]
+#![deny(missing_debug_implementations, nonstandard_style)]
+#![warn(missing_docs, missing_doc_code_examples)]
+#![cfg_attr(test, deny(warnings))]
 #![feature(futures_api, async_await)]
 
 use futures::{executor::block_on, prelude::*};
@@ -26,6 +30,8 @@ impl<T: HttpService> TestBackend<T> {
     }
 }
 
-pub fn make_server<T: HttpService>(service: T) -> Result<TestBackend<T>, <T::ConnectionFuture as TryFuture>::Error> {
+pub fn make_server<T: HttpService>(
+    service: T,
+) -> Result<TestBackend<T>, <T::ConnectionFuture as TryFuture>::Error> {
     TestBackend::wrap(service)
 }
