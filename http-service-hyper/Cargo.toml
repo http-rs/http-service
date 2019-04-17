@@ -9,11 +9,11 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service-hyper"
 repository = "https://github.com/rust-net-web/http-service"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 http = "0.1"
-http-service = "0.1.4"
+http-service = "0.1.5"
 hyper = "0.12.27"
 
 [dependencies.futures-preview]
