@@ -1,6 +1,10 @@
 //! `HttpService` server that uses Hyper as backend.
-#![cfg_attr(feature = "nightly", deny(missing_docs))]
-#![feature(futures_api, async_await, await_macro)]
+
+#![forbid(future_incompatible, rust_2018_idioms)]
+#![deny(missing_debug_implementations, nonstandard_style)]
+#![warn(missing_docs, missing_doc_code_examples)]
+#![cfg_attr(test, deny(warnings))]
+#![feature(futures_api, async_await, async_await_macro)]
 
 use futures::{
     compat::{Compat, Compat01As03, Future01CompatExt},
@@ -35,15 +39,13 @@ where
     fn make_service(&mut self, _ctx: Ctx) -> Self::Future {
         let service = self.service.clone();
         let error = std::io::Error::from(std::io::ErrorKind::Other);
-        FutureObj::new(Box::new(
-            async move {
-                let connection = await!(service.connect().into_future()).map_err(|_| error)?;
-                Ok(WrapConnection {
-                    service,
-                    connection,
-                })
-            },
-        ))
+        FutureObj::new(Box::new(async move {
+            let connection = await!(service.connect().into_future()).map_err(|_| error)?;
+            Ok(WrapConnection {
+                service,
+                connection,
+            })
+        }))
         .compat()
     }
 }
@@ -68,12 +70,10 @@ where
         });
         let fut = self.service.respond(&mut self.connection, req);
 
-        FutureObj::new(Box::new(
-            async move {
-                let res: http::Response<_> = await!(fut.into_future()).map_err(|_| error)?;
-                Ok(res.map(|body| hyper::Body::wrap_stream(body.compat())))
-            },
-        ))
+        FutureObj::new(Box::new(async move {
+            let res: http::Response<_> = await!(fut.into_future()).map_err(|_| error)?;
+            Ok(res.map(|body| hyper::Body::wrap_stream(body.compat())))
+        }))
         .compat()
     }
 }
