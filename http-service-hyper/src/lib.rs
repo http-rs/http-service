@@ -4,7 +4,7 @@
 #![deny(missing_debug_implementations, nonstandard_style)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![cfg_attr(test, deny(warnings))]
-#![feature(futures_api, async_await, async_await_macro)]
+#![feature(futures_api, async_await, await_macro)]
 
 use futures::{
     compat::{Compat, Compat01As03, Future01CompatExt},
