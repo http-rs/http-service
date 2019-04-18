@@ -1,9 +1,14 @@
-# http-service
+<h1 align="center">http-service</h1>
+<div align="center">
+ <strong>
+    Types and traits giving an interface between low-level http server implementations and services that use them. The interface is based on the `std::futures` API.
+ </strong>
+</div>
+
+<br />
 
 [![build status][1]][2]
 
-Types and traits giving an interface between low-level http server implementations
-and services that use them. The interface is based on the `std::futures` API.
 
 ## License
 
