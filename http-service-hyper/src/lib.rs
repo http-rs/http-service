@@ -80,16 +80,20 @@ where
 
 /// Serve the given `HttpService` at the given address, using `hyper` as backend.
 pub fn serve<S: HttpService>(s: S, addr: SocketAddr) {
+    let server = serve_async(s, addr)
+        .map(|_| Result::<_, ()>::Ok(()))
+        .compat();
+    hyper::rt::run(server);
+}
+
+/// Serve the given `HttpService` at the given address, using `hyper` as backend, and return a
+/// `Future` that can be `await`ed on.
+pub fn serve_async<S: HttpService>(
+    s: S,
+    addr: SocketAddr,
+) -> impl Future<Output = Result<(), hyper::Error>> {
     let service = WrapHttpService {
         service: Arc::new(s),
     };
-    let server = hyper::Server::bind(&addr)
-        .serve(service)
-        .compat()
-        .map(|_| {
-            let res: Result<(), ()> = Ok(());
-            res
-        })
-        .compat();
-    hyper::rt::run(server);
+    hyper::Server::bind(&addr).serve(service).compat()
 }
