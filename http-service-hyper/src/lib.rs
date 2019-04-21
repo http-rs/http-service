@@ -78,17 +78,9 @@ where
     }
 }
 
-/// Serve the given `HttpService` at the given address, using `hyper` as backend.
-pub fn serve<S: HttpService>(s: S, addr: SocketAddr) {
-    let server = serve_async(s, addr)
-        .map(|_| Result::<_, ()>::Ok(()))
-        .compat();
-    hyper::rt::run(server);
-}
-
 /// Serve the given `HttpService` at the given address, using `hyper` as backend, and return a
 /// `Future` that can be `await`ed on.
-pub fn serve_async<S: HttpService>(
+pub fn serve<S: HttpService>(
     s: S,
     addr: SocketAddr,
 ) -> impl Future<Output = Result<(), hyper::Error>> {
@@ -96,4 +88,11 @@ pub fn serve_async<S: HttpService>(
         service: Arc::new(s),
     };
     hyper::Server::bind(&addr).serve(service).compat()
+}
+
+/// Run the given `HttpService` at the given address on the default runtime, using `hyper` as
+/// backend.
+pub fn run<S: HttpService>(s: S, addr: SocketAddr) {
+    let server = serve(s, addr).map(|_| Result::<_, ()>::Ok(())).compat();
+    hyper::rt::run(server);
 }
