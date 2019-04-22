@@ -18,4 +18,4 @@ http = "0.1.17"
 http-service-hyper = { path = "http-service-hyper", version = "0.1.1" }
 
 [dependencies.futures-preview]
-version = "0.3.0-alpha.14"
+version = "0.3.0-alpha.15"

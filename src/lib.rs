@@ -57,17 +57,18 @@
 #![deny(missing_debug_implementations, nonstandard_style)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![cfg_attr(test, deny(warnings))]
-#![feature(futures_api, async_await, await_macro, arbitrary_self_types)]
+#![feature(async_await, await_macro, arbitrary_self_types)]
 
 use bytes::Bytes;
 use futures::{
     future,
     prelude::*,
-    stream::{self, StreamObj},
+    stream::{self, BoxStream},
     task::Context,
     Poll,
 };
 
+use std::fmt;
 use std::marker::Unpin;
 use std::pin::Pin;
 
@@ -76,9 +77,8 @@ use std::pin::Pin;
 /// A body is a stream of `Bytes` values, which are shared handles to byte buffers.
 /// Both `Body` and `Bytes` values can be easily created from standard owned byte buffer types
 /// like `Vec<u8>` or `String`, using the `From` trait.
-#[derive(Debug)]
 pub struct Body {
-    stream: StreamObj<'static, Result<Bytes, std::io::Error>>,
+    stream: BoxStream<'static, Result<Bytes, std::io::Error>>,
 }
 
 impl Body {
@@ -92,12 +92,11 @@ impl Body {
     where
         S: Stream<Item = Result<Bytes, std::io::Error>> + Send + 'static,
     {
-        Self {
-            stream: StreamObj::new(Box::new(s)),
-        }
+        Self { stream: s.boxed() }
     }
 
     /// Reads the stream into a new `Vec`.
+    #[allow(clippy::wrong_self_convention)] // https://github.com/rust-lang/rust-clippy/issues/4037
     pub async fn into_vec(mut self) -> std::io::Result<Vec<u8>> {
         let mut bytes = Vec::new();
         while let Some(chunk) = await!(self.next()) {
@@ -118,7 +117,13 @@ impl Unpin for Body {}
 impl Stream for Body {
     type Item = Result<Bytes, std::io::Error>;
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        Pin::new(&mut self.stream).poll_next(cx)
+        self.stream.poll_next_unpin(cx)
+    }
+}
+
+impl fmt::Debug for Body {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Body").finish()
     }
 }
 
