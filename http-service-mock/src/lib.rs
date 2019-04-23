@@ -15,7 +15,7 @@ pub struct TestBackend<T: HttpService> {
     service: T,
     connection: T::Connection,
 }
-
+ 
 impl<T: HttpService> TestBackend<T> {
     fn wrap(service: T) -> Result<Self, <T::ConnectionFuture as TryFuture>::Error> {
         let connection = block_on(service.connect().into_future())?;
