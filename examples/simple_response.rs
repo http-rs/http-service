@@ -15,7 +15,7 @@ impl Server {
 
     pub fn run(s: Server) {
         let a = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
-        http_service_hyper::serve(s, a);
+        http_service_hyper::run(s, a);
     }
 }
 
@@ -38,5 +38,5 @@ impl HttpService for Server {
 
 fn main() {
     let s = Server::create(String::from("Hello, World").into_bytes());
-    Server::serve(s);
+    Server::run(s);
 }
