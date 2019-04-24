@@ -4,7 +4,6 @@
 //! ## Example
 //! ```rust,no_run
 //! #![feature(futures_api, async_await, await_macro, existential_type)]
-//! 
 //! use futures::{
 //!     future::{self, FutureObj},
 //! };
