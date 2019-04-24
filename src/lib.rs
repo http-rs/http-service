@@ -1,9 +1,10 @@
 //! Types and traits giving an interface between low-level http server implementations
 //! and services that use them. The interface is based on the `std::futures` API.
-//! #![feature(futures_api, async_await, await_macro, existential_type)]
 //!
 //! ## Example
-//! ```no_run
+//! ```rust,no_run
+//! #![feature(futures_api, async_await, await_macro, existential_type)]
+//! 
 //! use futures::{
 //!     future::{self, FutureObj},
 //! };
@@ -21,9 +22,9 @@
 //!         }
 //!     }
 //!
-//!     pub fn serve(s: Server) {
+//!     pub fn run(s: Server) {
 //!         let a = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
-//!         http_service_hyper::serve(s, a);
+//!         http_service_hyper::run(s, a);
 //!     }
 //! }
 //!
@@ -48,7 +49,7 @@
 //!
 //! fn main() {
 //!     let s = Server::create(String::from("Hello, World").into_bytes());
-//!     Server::serve(s);
+//!     Server::run(s);
 //! }
 //! ```
 
