@@ -2,8 +2,9 @@
 //! and services that use them. The interface is based on the `std::futures` API.
 //!
 //! ## Example
-//! ```rust,no_run
+//! ```no_run, rust, ignore
 //! #![feature(futures_api, async_await, await_macro, existential_type)]
+//!
 //! use futures::{
 //!     future::{self, FutureObj},
 //! };
@@ -29,9 +30,9 @@
 //!
 //! impl HttpService for Server {
 //!     type Connection = ();
-//!    type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
+//!     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
 //!     type Fut = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
-//!     
+//!
 //!     fn connect(&self) -> Self::ConnectionFuture {
 //!         future::ok(())
 //!     }
