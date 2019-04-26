@@ -49,7 +49,10 @@
 ## About
 The crate `http-service` provides the necessary types and traits to implement your own HTTP Server. It uses `hyper` for the lower level TCP abstraction. 
 
-You can use the workspace member [`http-service-hyper`](https://crates.io/crates/http-service-hyper) to run your HTTP Server via `http_service_hyper::serve(HTTP_SERVICE, ADDRESS);`
+You can use the workspace member [`http-service-hyper`](https://crates.io/crates/http-service-hyper) to run your HTTP Server.
+
+1. Runs via `http_service_hyper::run(HTTP_SERVICE, ADDRESS);`
+2. Returns a future which can be `await`ed via `http_service_hyper::serve(HTTP_SERVICE, ADDRESS);`
 
 This crate uses the latest [Futures](https://github.com/rust-lang-nursery/futures-rs) preview, and therefore needs to be run on Rust Nightly.
 
