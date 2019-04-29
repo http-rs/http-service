@@ -18,4 +18,4 @@ hyper = "0.12.27"
 
 [dependencies.futures-preview]
 features = ["compat"]
-version = "0.3.0-alpha.14"
+version = "0.3.0-alpha.15"

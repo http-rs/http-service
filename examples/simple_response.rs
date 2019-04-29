@@ -1,4 +1,4 @@
-#![feature(futures_api, async_await, await_macro, existential_type)]
+#![feature(async_await, await_macro, existential_type)]
 
 use futures::future::{self, FutureObj};
 use http_service::{HttpService, Response};

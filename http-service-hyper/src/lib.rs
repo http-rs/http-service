@@ -4,11 +4,11 @@
 #![deny(missing_debug_implementations, nonstandard_style)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![cfg_attr(test, deny(warnings))]
-#![feature(futures_api, async_await, await_macro)]
+#![feature(async_await, await_macro)]
 
 use futures::{
     compat::{Compat, Compat01As03, Future01CompatExt},
-    future::FutureObj,
+    future::BoxFuture,
     prelude::*,
 };
 use http_service::{Body, HttpService};
@@ -33,20 +33,21 @@ where
     type ResBody = hyper::Body;
     type Error = std::io::Error;
     type Service = WrapConnection<H>;
-    type Future = Compat<FutureObj<'static, Result<Self::Service, Self::Error>>>;
+    type Future = Compat<BoxFuture<'static, Result<Self::Service, Self::Error>>>;
     type MakeError = std::io::Error;
 
     fn make_service(&mut self, _ctx: Ctx) -> Self::Future {
         let service = self.service.clone();
         let error = std::io::Error::from(std::io::ErrorKind::Other);
-        FutureObj::new(Box::new(async move {
+        async move {
             let connection = await!(service.connect().into_future()).map_err(|_| error)?;
             Ok(WrapConnection {
                 service,
                 connection,
             })
-        }))
-        .compat()
+        }
+            .boxed()
+            .compat()
     }
 }
 
@@ -57,7 +58,7 @@ where
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
     type Error = std::io::Error;
-    type Future = Compat<FutureObj<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
+    type Future = Compat<BoxFuture<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
 
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
         let error = std::io::Error::from(std::io::ErrorKind::Other);
@@ -70,11 +71,12 @@ where
         });
         let fut = self.service.respond(&mut self.connection, req);
 
-        FutureObj::new(Box::new(async move {
+        async move {
             let res: http::Response<_> = await!(fut.into_future()).map_err(|_| error)?;
             Ok(res.map(|body| hyper::Body::wrap_stream(body.compat())))
-        }))
-        .compat()
+        }
+            .boxed()
+            .compat()
     }
 }
 
