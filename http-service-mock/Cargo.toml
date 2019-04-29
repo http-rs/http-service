@@ -8,7 +8,7 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service-mock"
 repository = "https://github.com/rust-net-web/http-service"
-version = "0.1.1"
+version = "0.2.0"
 
 [dependencies]
 http-service = { version = "0.2.0", path = ".." }
