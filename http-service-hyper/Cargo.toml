@@ -13,7 +13,7 @@ version = "0.1.1"
 
 [dependencies]
 http = "0.1"
-http-service = { version = "0.1.5", path = ".." }
+http-service = { version = "0.2.0", path = ".." }
 hyper = "0.12.27"
 
 [dependencies.futures-preview]
