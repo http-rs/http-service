@@ -3,7 +3,7 @@
 //!
 //! ## Example
 //! ```no_run, rust, ignore
-//! #![feature(futures_api, async_await, await_macro, existential_type)]
+//! #![feature(futures_api, async_await, existential_type)]
 //!
 //! use futures::{
 //!     future::{self, FutureObj},
@@ -57,7 +57,7 @@
 #![deny(missing_debug_implementations, nonstandard_style)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![cfg_attr(test, deny(warnings))]
-#![feature(async_await, await_macro, arbitrary_self_types)]
+#![feature(async_await, arbitrary_self_types)]
 
 use bytes::Bytes;
 use futures::{
@@ -100,7 +100,7 @@ impl Body {
     #[allow(clippy::wrong_self_convention)] // https://github.com/rust-lang/rust-clippy/issues/4037
     pub async fn into_vec(mut self) -> std::io::Result<Vec<u8>> {
         let mut bytes = Vec::new();
-        while let Some(chunk) = await!(self.next()) {
+        while let Some(chunk) = self.next().await {
             bytes.extend(chunk?);
         }
         Ok(bytes)

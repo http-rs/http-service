@@ -70,7 +70,7 @@ version = "0.1.1"
 
 **main.rs**
 ```rust
-#![feature(futures_api, async_await, await_macro, existential_type)]
+#![feature(futures_api, async_await, existential_type)]
 
 use futures::future::{self, FutureObj};
 use http_service::{HttpService, Response};
