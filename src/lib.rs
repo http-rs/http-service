@@ -31,13 +31,13 @@
 //! impl HttpService for Server {
 //!     type Connection = ();
 //!     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
-//!     type Fut = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
+//!     type ResponseFuture = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
 //!
 //!     fn connect(&self) -> Self::ConnectionFuture {
 //!         future::ok(())
 //!     }
 //!
-//!     fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::Fut {
+//!     fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::ResponseFuture {
 //!         let message = self.message.clone();
 //!         FutureObj::new(Box::new(
 //!             async move {
@@ -164,29 +164,29 @@ pub trait HttpService: Send + Sync + 'static {
     /// Returning an error will result in the server immediately dropping
     /// the connection. It is usually preferable to instead return an HTTP response
     /// with an error status code.
-    type Fut: Send + 'static + TryFuture<Ok = Response>;
+    type ResponseFuture: Send + 'static + TryFuture<Ok = Response>;
 
     /// Begin handling a single request.
     ///
     /// The handler is given shared access to the service itself, and mutable access
     /// to the state for the connection where the request is taking place.
-    fn respond(&self, conn: &mut Self::Connection, req: Request) -> Self::Fut;
+    fn respond(&self, conn: &mut Self::Connection, req: Request) -> Self::ResponseFuture;
 }
 
-impl<F, Fut> HttpService for F
+impl<F, R> HttpService for F
 where
-    F: Send + Sync + 'static + Fn(Request) -> Fut,
-    Fut: Send + 'static + TryFuture<Ok = Response>,
-    Fut::Error: Send,
+    F: Send + Sync + 'static + Fn(Request) -> R,
+    R: Send + 'static + TryFuture<Ok = Response>,
+    R::Error: Send,
 {
     type Connection = ();
-    type ConnectionFuture = future::Ready<Result<(), Fut::Error>>;
+    type ConnectionFuture = future::Ready<Result<(), R::Error>>;
     fn connect(&self) -> Self::ConnectionFuture {
         future::ok(())
     }
 
-    type Fut = Fut;
-    fn respond(&self, _: &mut (), req: Request) -> Self::Fut {
+    type ResponseFuture = R;
+    fn respond(&self, _: &mut (), req: Request) -> Self::ResponseFuture {
         (self)(req)
     }
 }
