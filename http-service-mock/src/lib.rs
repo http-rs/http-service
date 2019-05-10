@@ -26,7 +26,10 @@ impl<T: HttpService> TestBackend<T> {
     }
 
     /// Send a request to the simulated server
-    pub fn simulate(&mut self, req: Request) -> Result<Response, <T::Fut as TryFuture>::Error> {
+    pub fn simulate(
+        &mut self,
+        req: Request,
+    ) -> Result<Response, <T::ResponseFuture as TryFuture>::Error> {
         block_on(
             self.service
                 .respond(&mut self.connection, req)

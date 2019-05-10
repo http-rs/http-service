@@ -94,13 +94,13 @@ impl Server {
 impl HttpService for Server {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
-    type Fut = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
+    type ResponseFuture = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
 
     fn connect(&self) -> Self::ConnectionFuture {
         future::ok(())
     }
 
-    fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::Fut {
+    fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::ResponseFuture {
         let message = self.message.clone();
         FutureObj::new(Box::new(async move {
             Ok(Response::new(http_service::Body::from(message)))
