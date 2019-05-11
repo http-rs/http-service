@@ -3,7 +3,7 @@
 //!
 //! ## Example
 //! ```no_run, rust, ignore
-//! #![feature(futures_api, async_await, existential_type)]
+//! #![feature(async_await, existential_type)]
 //!
 //! use futures::{
 //!     future::{self, FutureObj},
@@ -64,12 +64,10 @@ use futures::{
     future,
     prelude::*,
     stream::{self, BoxStream},
-    task::Context,
-    Poll,
+    task::{Context, Poll},
 };
 
 use std::fmt;
-use std::marker::Unpin;
 use std::pin::Pin;
 
 /// The raw body of an http request or response.
@@ -96,7 +94,6 @@ impl Body {
     }
 
     /// Reads the stream into a new `Vec`.
-    #[allow(unused_mut)]
     #[allow(clippy::wrong_self_convention)] // https://github.com/rust-lang/rust-clippy/issues/4037
     pub async fn into_vec(mut self) -> std::io::Result<Vec<u8>> {
         let mut bytes = Vec::new();
