@@ -4,7 +4,7 @@
 #![deny(missing_debug_implementations, nonstandard_style)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![cfg_attr(test, deny(warnings))]
-#![feature(async_await, await_macro)]
+#![feature(async_await)]
 
 use futures::{
     compat::{Compat, Compat01As03, Future01CompatExt},
@@ -40,7 +40,7 @@ where
         let service = self.service.clone();
         let error = std::io::Error::from(std::io::ErrorKind::Other);
         async move {
-            let connection = await!(service.connect().into_future()).map_err(|_| error)?;
+            let connection = service.connect().into_future().await.map_err(|_| error)?;
             Ok(WrapConnection {
                 service,
                 connection,
@@ -72,7 +72,7 @@ where
         let fut = self.service.respond(&mut self.connection, req);
 
         async move {
-            let res: http::Response<_> = await!(fut.into_future()).map_err(|_| error)?;
+            let res: http::Response<_> = fut.into_future().await.map_err(|_| error)?;
             Ok(res.map(|body| hyper::Body::wrap_stream(body.compat())))
         }
             .boxed()
