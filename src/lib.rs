@@ -2,11 +2,11 @@
 //! and services that use them. The interface is based on the `std::futures` API.
 //!
 //! ## Example
-//! ```no_run, rust, ignore
+//! ```rust,no_run
 //! #![feature(async_await, existential_type)]
 //!
 //! use futures::{
-//!     future::{self, FutureObj},
+//!     future::{self, BoxFuture, FutureExt},
 //! };
 //! use http_service::{HttpService, Response};
 //! use std::net::{IpAddr, Ipv4Addr, SocketAddr};
@@ -31,7 +31,7 @@
 //! impl HttpService for Server {
 //!     type Connection = ();
 //!     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
-//!     type ResponseFuture = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
+//!     type ResponseFuture = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
 //!
 //!     fn connect(&self) -> Self::ConnectionFuture {
 //!         future::ok(())
@@ -39,11 +39,7 @@
 //!
 //!     fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::ResponseFuture {
 //!         let message = self.message.clone();
-//!         FutureObj::new(Box::new(
-//!             async move {
-//!                 Ok(Response::new(http_service::Body::from(message)))
-//!             }
-//!         ))
+//!         async move { Ok(Response::new(http_service::Body::from(message))) }.boxed()
 //!     }
 //! }
 //!
@@ -56,6 +52,8 @@
 #![forbid(future_incompatible, rust_2018_idioms)]
 #![deny(missing_debug_implementations, nonstandard_style)]
 #![warn(missing_docs, missing_doc_code_examples)]
+#![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
+#![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(test, deny(warnings))]
 #![feature(async_await, arbitrary_self_types)]
 
@@ -69,6 +67,10 @@ use futures::{
 
 use std::fmt;
 use std::pin::Pin;
+
+#[cfg(test)]
+#[doc(include = "../README.md")]
+const _README: () = ();
 
 /// The raw body of an http request or response.
 ///
