@@ -1,6 +1,6 @@
 #![feature(async_await, existential_type)]
 
-use futures::future::{self, FutureObj};
+use futures::future::{self, BoxFuture, FutureExt};
 use http_service::{HttpService, Response};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
@@ -14,7 +14,7 @@ impl Server {
     }
 
     pub fn run(s: Server) {
-        let a = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
+        let a = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8088);
         http_service_hyper::run(s, a);
     }
 }
@@ -22,7 +22,7 @@ impl Server {
 impl HttpService for Server {
     type Connection = ();
     type ConnectionFuture = future::Ready<Result<(), std::io::Error>>;
-    type ResponseFuture = FutureObj<'static, Result<http_service::Response, std::io::Error>>;
+    type ResponseFuture = BoxFuture<'static, Result<http_service::Response, std::io::Error>>;
 
     fn connect(&self) -> Self::ConnectionFuture {
         future::ok(())
@@ -30,9 +30,7 @@ impl HttpService for Server {
 
     fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::ResponseFuture {
         let message = self.message.clone();
-        FutureObj::new(Box::new(async move {
-            Ok(Response::new(http_service::Body::from(message)))
-        }))
+        async move { Ok(Response::new(http_service::Body::from(message))) }.boxed()
     }
 }
 
