@@ -47,6 +47,7 @@
 </div>
 
 ## About
+
 The crate `http-service` provides the necessary types and traits to implement your own HTTP Server. It uses `hyper` for the lower level TCP abstraction.
 
 You can use the workspace member [`http-service-hyper`](https://crates.io/crates/http-service-hyper) to run your HTTP Server.
@@ -59,6 +60,7 @@ This crate uses the latest [Futures](https://github.com/rust-lang-nursery/future
 ## Examples
 
 **Cargo.toml**
+
 ```toml
 [dependencies]
 http-service = "0.2.0"
@@ -69,6 +71,7 @@ version = "0.1.1"
 ```
 
 **main.rs**
+
 ```rust,no_run
 #![feature(async_await, existential_type)]
 
