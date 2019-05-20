@@ -8,6 +8,7 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service-mock"
 repository = "https://github.com/rustasync/http-service"
+documentation = "https://docs.rs/http-service-mock"
 version = "0.2.0"
 
 [dependencies]
