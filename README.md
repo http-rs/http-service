@@ -115,6 +115,18 @@ fn main() {
 }
 ```
 
+## Contributing
+
+Want to join us? Check out our [The "Contributing" section of the guide][contributing] and take a look at some of these issues:
+
+- [Issues labeled "good first issue"][good-first-issue]
+- [Issues labeled "help wanted"][help-wanted]
+
+#### Conduct
+
+The Tide project adheres to the [Contributor Covenant Code of Conduct](https://github.com/rustasync/.github/blob/master/CODE_OF_CONDUCT.md).
+This describes the minimum behavior expected from all contributors.
+
 ## License
 
 [MIT](./LICENSE-MIT) OR [Apache-2.0](./LICENSE-APACHE)
