@@ -3,6 +3,12 @@ authors = ["Aaron Turon <aturon@mozilla.com>"]
 description = "Types and traits for standardizing async HTTP services"
 repository = "https://github.com/rustasync/http-service"
 documentation = "https://docs.rs/http-service"
+keywords = ["http-service", "http", "web", "async"]
+categories = [
+  "network-programming",
+  "asynchronous",
+  "web-programming::http-server"
+]
 readme = "README.md"
 edition = "2018"
 license = "MIT OR Apache-2.0"
