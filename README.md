@@ -130,3 +130,7 @@ This describes the minimum behavior expected from all contributors.
 ## License
 
 [MIT](./LICENSE-MIT) OR [Apache-2.0](./LICENSE-APACHE)
+
+[contributing]: https://github.com/rustasync/.github/blob/master/CONTRIBUTING.md
+[good-first-issue]: https://github.com/rustasync/http-service/labels/good%20first%20issue
+[help-wanted]: https://github.com/rustasync/http-service/labels/help%20wanted
