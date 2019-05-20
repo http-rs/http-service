@@ -8,7 +8,7 @@ description = "HttpService server that uses Hyper as backend"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service-hyper"
-repository = "https://github.com/rust-net-web/http-service"
+repository = "https://github.com/rustasync/http-service"
 version = "0.2.0"
 
 [dependencies]
