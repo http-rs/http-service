@@ -47,6 +47,7 @@
 </div>
 
 ## About
+
 The crate `http-service` provides the necessary types and traits to implement your own HTTP Server. It uses `hyper` for the lower level TCP abstraction.
 
 You can use the workspace member [`http-service-hyper`](https://crates.io/crates/http-service-hyper) to run your HTTP Server.
@@ -59,6 +60,7 @@ This crate uses the latest [Futures](https://github.com/rust-lang-nursery/future
 ## Examples
 
 **Cargo.toml**
+
 ```toml
 [dependencies]
 http-service = "0.2.0"
@@ -69,6 +71,7 @@ version = "0.1.1"
 ```
 
 **main.rs**
+
 ```rust,no_run
 #![feature(async_await, existential_type)]
 
@@ -112,6 +115,22 @@ fn main() {
 }
 ```
 
+## Contributing
+
+Want to join us? Check out our [The "Contributing" section of the guide][contributing] and take a look at some of these issues:
+
+- [Issues labeled "good first issue"][good-first-issue]
+- [Issues labeled "help wanted"][help-wanted]
+
+#### Conduct
+
+The Tide project adheres to the [Contributor Covenant Code of Conduct](https://github.com/rustasync/.github/blob/master/CODE_OF_CONDUCT.md).
+This describes the minimum behavior expected from all contributors.
+
 ## License
 
 [MIT](./LICENSE-MIT) OR [Apache-2.0](./LICENSE-APACHE)
+
+[contributing]: https://github.com/rustasync/.github/blob/master/CONTRIBUTING.md
+[good-first-issue]: https://github.com/rustasync/http-service/labels/good%20first%20issue
+[help-wanted]: https://github.com/rustasync/http-service/labels/help%20wanted
