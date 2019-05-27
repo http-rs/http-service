@@ -1,13 +1,25 @@
 language: rust
 rust:
   - nightly-2019-05-09
-
-before_script: |
-  rustup component add rustfmt clippy
-script: |
-  cargo fmt --all -- --check &&
-  cargo clippy --all -- -D clippy::all &&
-  cargo build --no-default-features --verbose &&
-  cargo build --all --verbose &&
-  cargo test  --all --verbose
 cache: cargo
+
+matrix:
+  include:
+  - name: cargo doc
+    script: cargo doc --all --all-features --no-deps
+
+  - name: cargo fmt
+    before_script: rustup component add rustfmt
+    script: cargo fmt --all -- --check
+
+  - name: cargo clippy
+    before_script: rustup component add clippy
+    script: cargo clippy --all -- -D clippy::all
+
+  - name: cargo build --no-default-features
+    script:
+      - cargo build --no-default-features --verbose
+      - cargo build --all --verbose
+
+  - name: cargo test
+    script: cargo test --all --verbose
