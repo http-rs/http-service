@@ -15,8 +15,15 @@ version = "0.2.0"
 [dependencies]
 http = "0.1"
 http-service = { version = "0.2.0", path = ".." }
-hyper = "0.12.27"
+hyper = { version = "0.12.27", default-features = false }
 
 [dependencies.futures-preview]
-features = ["compat"]
+features = ["compat", "io-compat"]
 version = "0.3.0-alpha.16"
+
+[features]
+default = ["runtime"]
+runtime = ["hyper/runtime"]
+
+[dev-dependencies]
+romio = "0.3.0-alpha.8"
