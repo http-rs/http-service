@@ -16,7 +16,7 @@ name = "http-service"
 version = "0.2.0"
 
 [workspace]
-members = ["http-service-hyper", "http-service-mock"]
+members = ["http-service-hyper", "http-service-lambda", "http-service-mock"]
 
 [dependencies]
 bytes = "0.4.12"

@@ -1,0 +1,24 @@
+[package]
+authors = ["Kan-Ru Chen <kanru@kanru.info>"]
+description = "HttpService server that AWS Lambda Rust Runtime as backend"
+documentation = "https://docs.rs/http-service-lambda"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+name = "http-service-lambda"
+repository = "https://github.com/rustasync/http-service"
+version = "0.1.0"
+
+[dependencies]
+http-service = "0.2.0"
+lambda_http = "0.1.1"
+lambda_runtime = "0.2.1"
+tokio = "0.1.21"
+
+[dependencies.futures-preview]
+features = ["compat"]
+version = "0.3.0-alpha.16"
+
+[dev-dependencies]
+log = "0.4.6"
+simple_logger = { version = "1.3.0", default-features = false }
+tide = "0.2.0"
