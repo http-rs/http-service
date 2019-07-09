@@ -48,11 +48,11 @@ impl<OK, ERR> ResultExt<OK, ERR> for Result<OK, ERR> {
     }
 }
 
-trait CompatHttpBodayAsLambda {
+trait CompatHttpBodyAsLambda {
     fn into_lambda(self) -> LambdaBody;
 }
 
-impl CompatHttpBodayAsLambda for Vec<u8> {
+impl CompatHttpBodyAsLambda for Vec<u8> {
     fn into_lambda(self) -> LambdaBody {
         if self.is_empty() {
             return LambdaBody::Empty;
