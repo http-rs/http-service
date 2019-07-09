@@ -1,5 +1,9 @@
 [package]
-authors = ["Kan-Ru Chen <kanru@kanru.info>"]
+authors = [
+  "Aaron Turon <aturon@mozilla.com>",
+  "Yoshua Wuyts <yoshuawuyts@gmail.com>",
+  "Kan-Ru Chen <kanru@kanru.info>",
+]
 description = "HttpService server that AWS Lambda Rust Runtime as backend"
 documentation = "https://docs.rs/http-service-lambda"
 edition = "2018"
