@@ -16,7 +16,7 @@ name = "http-service"
 version = "0.2.0"
 
 [workspace]
-members = ["http-service-hyper", "http-service-mock"]
+members = ["http-service-hyper", "http-service-lambda", "http-service-mock"]
 
 [dependencies]
 bytes = "0.4.12"
@@ -27,3 +27,9 @@ http-service-hyper = { path = "http-service-hyper", version = "0.2.0" }
 
 [dependencies.futures-preview]
 version = "0.3.0-alpha.16"
+
+[patch.crates-io]
+http-service = { path = "." }
+http-service-mock = { path = "./http-service-mock" }
+http-service-hyper = { path = "./http-service-hyper" }
+tide = { git = "https://github.com/rustasync/tide", branch = "master" }
