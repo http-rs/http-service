@@ -140,11 +140,11 @@ mod tests {
     impl HttpService for DummyService {
         type Connection = ();
         type ConnectionFuture = future::Ready<Result<(), ()>>;
-        type Fut = future::BoxFuture<'static, Result<http_service::Response, ()>>;
+        type ResponseFuture = future::BoxFuture<'static, Result<http_service::Response, ()>>;
         fn connect(&self) -> Self::ConnectionFuture {
             future::ok(())
         }
-        fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::Fut {
+        fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::ResponseFuture {
             Box::pin(async move { Ok(http_service::Response::new(http_service::Body::empty())) })
         }
     }

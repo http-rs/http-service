@@ -5,7 +5,7 @@ use tide::middleware::DefaultHeaders;
 fn main() {
     simple_logger::init_with_level(log::Level::Info).unwrap();
 
-    let mut app = tide::App::new(());
+    let mut app = tide::App::new();
 
     app.middleware(
         DefaultHeaders::new()

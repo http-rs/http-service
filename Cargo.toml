@@ -27,3 +27,9 @@ http-service-hyper = { path = "http-service-hyper", version = "0.2.0" }
 
 [dependencies.futures-preview]
 version = "0.3.0-alpha.16"
+
+[patch.crates-io]
+http-service = { path = "." }
+http-service-mock = { path = "./http-service-mock" }
+http-service-hyper = { path = "./http-service-hyper" }
+tide = { git = "https://github.com/rustasync/tide", branch = "master" }
