@@ -13,7 +13,7 @@ fn main() {
             .header("X-Server", "Tide"),
     );
 
-    app.at("/").get(async move |_| "Hello, world!");
+    app.at("/").get(|_| async move { "Hello, world!" });
 
     http_service_lambda::run(app.into_http_service());
 }
