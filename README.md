@@ -124,7 +124,7 @@ Want to join us? Check out our [The "Contributing" section of the guide][contrib
 
 #### Conduct
 
-The Tide project adheres to the [Contributor Covenant Code of Conduct](https://github.com/rustasync/.github/blob/master/CODE_OF_CONDUCT.md).
+The http-service project adheres to the [Contributor Covenant Code of Conduct](https://github.com/rustasync/.github/blob/master/CODE_OF_CONDUCT.md).
 This describes the minimum behavior expected from all contributors.
 
 ## License
