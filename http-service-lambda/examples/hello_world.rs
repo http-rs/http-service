@@ -1,4 +1,4 @@
-#![feature(async_await, async_closure)]
+#![feature(async_await)]
 use simple_logger;
 use tide::middleware::DefaultHeaders;
 
