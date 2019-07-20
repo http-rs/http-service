@@ -11,9 +11,9 @@ impl Server {
         Server { message }
     }
 
-    pub fn run(s: Server) {
+    pub async fn run(s: Server) {
         let a = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8088);
-        http_service_hyper::run(s, a);
+        http_service_hyper::serve(s, a).await;
     }
 }
 
@@ -32,7 +32,8 @@ impl HttpService for Server {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let s = Server::create(String::from("Hello, World").into_bytes());
-    Server::run(s);
+    Server::run(s).await;
 }

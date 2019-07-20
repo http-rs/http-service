@@ -65,7 +65,7 @@ This crate uses the latest [Futures](https://github.com/rust-lang-nursery/future
 [dependencies]
 http-service = "0.3.1"
 http-service-hyper = "0.3.1"
-futures-preview = "0.3.0-alpha.16"
+futures-preview = "0.3.0-alpha.18"
 ```
 
 **main.rs**

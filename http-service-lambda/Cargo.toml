@@ -20,7 +20,7 @@ tokio = "0.1.21"
 
 [dependencies.futures-preview]
 features = ["compat"]
-version = "0.3.0-alpha.16"
+version = "0.3.0-alpha.18"
 
 [dev-dependencies]
 log = "0.4.6"

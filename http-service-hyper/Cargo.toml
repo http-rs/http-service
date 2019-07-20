@@ -15,15 +15,15 @@ version = "0.3.1"
 [dependencies]
 http = "0.1"
 http-service = { version = "0.3.1", path = ".." }
-hyper = { version = "0.12.27", default-features = false }
+hyper = { git = "https://github.com/hyperium/hyper", default-features = false }
+futures-tokio-compat = { git = "https://github.com/Nemo157/futures-tokio-compat" }
 
 [dependencies.futures-preview]
-features = ["compat", "io-compat"]
-version = "0.3.0-alpha.16"
+version = "0.3.0-alpha.18"
 
 [features]
 default = ["runtime"]
 runtime = ["hyper/runtime"]
 
 [dev-dependencies]
-romio = "0.3.0-alpha.8"
+romio = "0.3.0-alpha.9"
