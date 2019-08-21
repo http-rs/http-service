@@ -4,7 +4,6 @@
 #![deny(missing_debug_implementations, nonstandard_style)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![cfg_attr(test, deny(warnings))]
-#![feature(async_await)]
 
 #[cfg(feature = "runtime")]
 use futures::compat::Future01CompatExt;

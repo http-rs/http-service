@@ -73,8 +73,6 @@ version = "0.1.1"
 **main.rs**
 
 ```rust,no_run
-#![feature(async_await, existential_type)]
-
 use futures::future::{self, BoxFuture, FutureExt};
 use http_service::{HttpService, Response};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};

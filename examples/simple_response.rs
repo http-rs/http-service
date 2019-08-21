@@ -1,5 +1,3 @@
-#![feature(async_await, existential_type)]
-
 use futures::future::{self, BoxFuture, FutureExt};
 use http_service::{HttpService, Response};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};

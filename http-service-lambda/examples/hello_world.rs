@@ -1,4 +1,3 @@
-#![feature(async_await)]
 use simple_logger;
 use tide::middleware::DefaultHeaders;
 

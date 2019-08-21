@@ -3,8 +3,6 @@
 //!
 //! ## Example
 //! ```rust,no_run
-//! #![feature(async_await, existential_type)]
-//!
 //! use futures::{
 //!     future::{self, BoxFuture, FutureExt},
 //! };
@@ -55,7 +53,6 @@
 #![cfg_attr(any(feature = "nightly", test), feature(external_doc))]
 #![cfg_attr(feature = "nightly", doc(include = "../README.md"))]
 #![cfg_attr(test, deny(warnings))]
-#![feature(async_await, arbitrary_self_types)]
 
 use bytes::Bytes;
 use futures::{
