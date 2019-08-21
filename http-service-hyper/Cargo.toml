@@ -10,11 +10,11 @@ license = "MIT OR Apache-2.0"
 name = "http-service-hyper"
 repository = "https://github.com/rustasync/http-service"
 documentation = "https://docs.rs/http-service-hyper"
-version = "0.2.0"
+version = "0.3.1"
 
 [dependencies]
 http = "0.1"
-http-service = { version = "0.2.0", path = ".." }
+http-service = { version = "0.3.1", path = ".." }
 hyper = { version = "0.12.27", default-features = false }
 
 [dependencies.futures-preview]

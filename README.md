@@ -63,18 +63,14 @@ This crate uses the latest [Futures](https://github.com/rust-lang-nursery/future
 
 ```toml
 [dependencies]
-http-service = "0.2.0"
+http-service = "0.3.1"
+http-service-hyper = "0.3.1"
 futures-preview = "0.3.0-alpha.16"
-
-[dependencies.http-service-hyper]
-version = "0.1.1"
 ```
 
 **main.rs**
 
 ```rust,no_run
-#![feature(async_await, existential_type)]
-
 use futures::future::{self, BoxFuture, FutureExt};
 use http_service::{HttpService, Response};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
