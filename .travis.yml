@@ -1,6 +1,6 @@
 language: rust
 rust:
-  - nightly-2019-07-08
+  - nightly-2019-08-21
 cache: cargo
 
 matrix:
