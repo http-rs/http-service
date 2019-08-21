@@ -14,53 +14,87 @@ use std::net::SocketAddr;
 use std::{
     pin::Pin,
     sync::Arc,
-    task::{self, Poll},
+    task::{self, Context, Poll},
 };
 
-// Wrapper type to allow us to provide a blanket `MakeService` impl
 struct WrapHttpService<H> {
     service: Arc<H>,
+}
+
+impl<T, H> tower_service::Service<T> for WrapHttpService<H>
+where
+    H: HttpService,
+    <H as http_service::HttpService>::ConnectionFuture: TryFuture<Error = std::io::Error>,
+{
+    type Response = WrapConnection<H>;
+    type Error = std::io::Error;
+    type Future = future::Ready<Result<Self::Response, Self::Error>>;
+
+    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Ok(()).into()
+    }
+
+    fn call(&mut self, _: T) -> Self::Future {
+        future::ok(WrapConnection {
+            connection: Some(ConnectionStatus::Pending(Box::pin(self.service.connect()))),
+            service: self.service.clone(),
+        })
+    }
+}
+
+enum ConnectionStatus<C, E> {
+    Pending(Pin<Box<dyn TryFuture<Ok = C, Error = E> + Send + 'static>>),
+    Ready(Result<C, E>),
+}
+
+impl<C, E: std::fmt::Debug> ConnectionStatus<C, E> {
+    fn unwrap_connection(&mut self) -> &mut C {
+        if let ConnectionStatus::Ready(ref mut res) = *self {
+            return res.as_mut().unwrap();
+        }
+
+        unreachable!()
+    }
 }
 
 // Wrapper type to allow us to provide a blanket `Service` impl
 struct WrapConnection<H: HttpService> {
     service: Arc<H>,
-    connection: H::Connection,
+    connection: Option<ConnectionStatus<H::Connection, std::io::Error>>,
 }
 
-impl<H, Ctx> hyper::service::MakeService<Ctx> for WrapHttpService<H>
+impl<H> tower_service::Service<hyper::Request<hyper::Body>> for WrapConnection<H>
 where
     H: HttpService,
+    H::ConnectionFuture: TryFuture<Error = std::io::Error>,
 {
-    type ReqBody = hyper::Body;
-    type ResBody = hyper::Body;
+    type Response = hyper::Response<hyper::Body>;
     type Error = std::io::Error;
-    type Service = WrapConnection<H>;
-    type Future = BoxFuture<'static, Result<Self::Service, Self::Error>>;
-    type MakeError = std::io::Error;
+    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
-    fn make_service(&mut self, _ctx: Ctx) -> Self::Future {
-        let service = self.service.clone();
-        let error = std::io::Error::from(std::io::ErrorKind::Other);
-        async move {
-            let connection = service.connect().into_future().await.map_err(|_| error)?;
-            Ok(WrapConnection {
-                service,
-                connection,
-            })
-        }
-            .boxed()
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        let conn = {
+            match self.connection.take().unwrap() {
+                ConnectionStatus::Pending(mut fut) => {
+                    if let Poll::Ready(res) = fut.as_mut().try_poll(cx) {
+                        cx.waker().wake_by_ref();
+                        ConnectionStatus::Ready(res)
+                    } else {
+                        ConnectionStatus::Pending(fut)
+                    }
+                }
+                ConnectionStatus::Ready(res) => {
+                    return Poll::Ready(
+                        res.map(|ok| self.connection = Some(ConnectionStatus::Ready(Ok(ok)))),
+                    );
+                }
+            }
+        };
+
+        self.connection = Some(conn);
+
+        Poll::Pending
     }
-}
-
-impl<H> hyper::service::Service for WrapConnection<H>
-where
-    H: HttpService,
-{
-    type ReqBody = hyper::Body;
-    type ResBody = hyper::Body;
-    type Error = std::io::Error;
-    type Future = BoxFuture<'static, Result<http::Response<hyper::Body>, Self::Error>>;
 
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
         let error = std::io::Error::from(std::io::ErrorKind::Other);
@@ -71,7 +105,9 @@ where
             });
             Body::from_stream(stream)
         });
-        let fut = self.service.respond(&mut self.connection, req);
+        let fut = self
+            .service
+            .respond(self.connection.as_mut().unwrap().unwrap_connection(), req);
 
         async move {
             let res: http::Response<_> = fut.into_future().await.map_err(|_| error)?;
@@ -142,7 +178,7 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
     ///
     /// // And an HttpService to handle each connection...
     /// let service = |req| {
-    ///     futures::future::ok::<_, ()>(Response::new(Body::from("Hello World")))
+    ///     futures::future::ok::<_, std::io::Error>(Response::new(Body::from("Hello World")))
     /// };
     ///
     /// // Then bind, configure the spawner to our pool, and serve...
@@ -161,6 +197,7 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
         I::Ok: AsyncRead + AsyncWrite + Send + Unpin + 'static,
         I::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
         Sp: Clone + Spawn + Unpin + Send + 'static,
+        S::ConnectionFuture: TryFuture<Error = std::io::Error>,
     {
         Server {
             inner: self.inner.serve(WrapHttpService {
@@ -176,6 +213,7 @@ where
     I::Ok: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     I::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
     S: HttpService,
+    S::ConnectionFuture: TryFuture<Error = std::io::Error>,
     Sp: Clone + Spawn + Unpin + Send + 'static,
 {
     type Output = hyper::Result<()>;
@@ -188,10 +226,11 @@ where
 /// Serve the given `HttpService` at the given address, using `hyper` as backend, and return a
 /// `Future` that can be `await`ed on.
 #[cfg(feature = "runtime")]
-pub fn serve<S: HttpService>(
-    s: S,
-    addr: SocketAddr,
-) -> impl Future<Output = Result<(), hyper::Error>> {
+pub fn serve<S>(s: S, addr: SocketAddr) -> impl Future<Output = Result<(), hyper::Error>>
+where
+    S: HttpService,
+    <S as http_service::HttpService>::ConnectionFuture: TryFuture<Error = std::io::Error>,
+{
     let service = WrapHttpService {
         service: Arc::new(s),
     };

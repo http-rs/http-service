@@ -13,7 +13,7 @@ impl Server {
 
     pub async fn run(s: Server) {
         let a = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8088);
-        http_service_hyper::serve(s, a).await;
+        http_service_hyper::serve(s, a).await.unwrap();
     }
 }
 
