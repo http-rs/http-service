@@ -15,7 +15,7 @@ version = "0.3.1"
 [dependencies]
 http = "0.1"
 http-service = { version = "0.3.1", path = ".." }
-futures-tokio-compat = { git = "https://github.com/Nemo157/futures-tokio-compat" }
+futures-tokio-compat = { git = "https://github.com/Nemo157/futures-tokio-compat", rev = "8a93702bba5210314e4c268a513f1ecd9f48d7df" }
 hyper = { version = "=0.13.0-alpha.1", default-features = false }
 tower-service = "0.3.0-alpha.1"
 
