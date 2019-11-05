@@ -14,7 +14,6 @@ use futures::stream;
 use futures::task::Spawn;
 use http_service::{Body, HttpService};
 use hyper::server::{Builder as HyperBuilder, Server as HyperServer};
-use std::marker::PhantomData;
 
 #[cfg(feature = "runtime")]
 use std::net::SocketAddr;
@@ -29,19 +28,19 @@ struct WrapHttpService<H> {
 }
 
 // Wrapper type to allow us to provide a blanket `Service` impl
-struct WrapConnection<H: HttpService<E1, E2>, E1, E2> {
+struct WrapConnection<H: HttpService> {
     service: Arc<H>,
     connection: H::Connection,
 }
 
-impl<H, Ctx, E1, E2> hyper::service::MakeService<Ctx> for WrapHttpService<H, E1, E2>
+impl<H, Ctx, > hyper::service::MakeService<Ctx> for WrapHttpService<H, >
 where
-    H: HttpService<E1, E2>,
+    H: HttpService,
 {
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
     type Error = std::io::Error;
-    type Service = WrapConnection<H, E1, E2>;
+    type Service = WrapConnection<H, >;
     type Future = Compat03As01<BoxFuture<'static, Result<Self::Service, Self::Error>>>;
     type MakeError = std::io::Error;
 
@@ -53,8 +52,6 @@ where
             Ok(WrapConnection {
                 service,
                 connection,
-                __error_1: PhantomData,
-                __error_2: PhantomData,
             })
         }
         .boxed()
@@ -62,9 +59,9 @@ where
     }
 }
 
-impl<H, E1, E2> hyper::service::Service for WrapConnection<H, E1, E2>
+impl<H, > hyper::service::Service for WrapConnection<H, >
 where
-    H: HttpService<E1, E2>,
+    H: HttpService,
 {
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
@@ -82,7 +79,7 @@ where
             Body::from_reader(Box::new(body_reader))
         });
 
-        let fut = self.service.respond(self.connection, req);
+        let fut = self.service.respond(&mut self.connection, req);
 
         // Convert Request
         async move {
@@ -176,7 +173,7 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
     /// // Finally, spawn `server` onto our executor...
     /// pool.run(server)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
-    pub fn serve<S: HttpService<E1, E2>, E1, E2>(self, service: S) -> Server<I, S, Sp>
+    pub fn serve<S: HttpService, >(self, service: S) -> Server<I, S, Sp>
     where
         I: TryStream + Unpin,
         I::Ok: AsyncRead + AsyncWrite + Send + Unpin + 'static,
@@ -192,12 +189,12 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
     }
 }
 
-impl<I, S, Sp, E1, E2> Future for Server<I, S, Sp>
+impl<I, S, Sp, > Future for Server<I, S, Sp>
 where
     I: TryStream + Unpin,
     I::Ok: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     I::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
-    S: HttpService<E1, E2>,
+    S: HttpService,
     Sp: Clone + Send + 'static,
     for<'a> &'a Sp: Spawn,
 {
@@ -211,7 +208,7 @@ where
 /// Serve the given `HttpService` at the given address, using `hyper` as backend, and return a
 /// `Future` that can be `await`ed on.
 #[cfg(feature = "runtime")]
-pub fn serve<S: HttpService<E1, E2>, E1, E2>(
+pub fn serve<S: HttpService, >(
     s: S,
     addr: SocketAddr,
 ) -> impl Future<Output = Result<(), hyper::Error>> {
@@ -224,7 +221,7 @@ pub fn serve<S: HttpService<E1, E2>, E1, E2>(
 /// Run the given `HttpService` at the given address on the default runtime, using `hyper` as
 /// backend.
 #[cfg(feature = "runtime")]
-pub fn run<S: HttpService<E1, E2>, E1, E2>(s: S, addr: SocketAddr) {
+pub fn run<S: HttpService>(s: S, addr: SocketAddr) {
     let server = serve(s, addr).map(|_| Result::<_, ()>::Ok(())).compat();
     hyper::rt::run(server);
 }

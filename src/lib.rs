@@ -7,8 +7,9 @@
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 
 use async_std::io::{self, prelude::*};
-use async_std::prelude::*;
 use async_std::task::{Context, Poll};
+
+use futures::future::TryFuture;
 
 use std::fmt;
 use std::pin::Pin;
@@ -75,7 +76,7 @@ pub type Response = http::Response<Body>;
 ///
 /// An instance represents a service as a whole. The associated `Conn` type
 /// represents a particular connection, and may carry connection-specific state.
-pub trait HttpService<E1, E2>: Send + Sync + 'static {
+pub trait HttpService: Send + Sync + 'static {
     /// An individual connection.
     ///
     /// This associated type is used to establish and hold any per-connection state
@@ -89,7 +90,7 @@ pub trait HttpService<E1, E2>: Send + Sync + 'static {
     ///
     /// Returning an error will result in the server immediately dropping
     /// the connection.
-    type ConnectionFuture: Send + 'static + Future<Output = Result<Self::Connection, E1>>;
+    type ConnectionFuture: Send + 'static + TryFuture<Ok = Self::Connection>;
 
     /// Initiate a new connection.
     ///
@@ -102,13 +103,13 @@ pub trait HttpService<E1, E2>: Send + Sync + 'static {
     /// Returning an error will result in the server immediately dropping
     /// the connection. It is usually preferable to instead return an HTTP response
     /// with an error status code.
-    type ResponseFuture: Send + 'static + Future<Output = Result<Response, E2>>;
+    type ResponseFuture: Send + 'static + TryFuture<Ok = Response>;
 
     /// Begin handling a single request.
     ///
     /// The handler is given shared access to the service itself, and mutable access
     /// to the state for the connection where the request is taking place.
-    fn respond(&self, conn: Self::Connection, req: Request) -> Self::ResponseFuture;
+    fn respond(&self, conn: &mut Self::Connection, req: Request) -> Self::ResponseFuture;
 }
 
 // impl<F, R, E> HttpService<E> for F
