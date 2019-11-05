@@ -75,28 +75,49 @@ pub type Response = http::Response<Body>;
 ///
 /// An instance represents a service as a whole. The associated `Conn` type
 /// represents a particular connection, and may carry connection-specific state.
-pub trait HttpService<E>: Send + Sync + 'static {
+pub trait HttpService<E1, E2>: Send + Sync + 'static {
+    /// An individual connection.
+    ///
+    /// This associated type is used to establish and hold any per-connection state
+    /// needed by the service.
+    type Connection: Send + 'static;
+
+    /// A future for setting up an individual connection.
+    ///
+    /// This method is called each time the server receives a new connection request,
+    /// but before actually exchanging any data with the client.
+    ///
+    /// Returning an error will result in the server immediately dropping
+    /// the connection.
+    type ConnectionFuture: Send + 'static + Future<Output = Result<Self::Connection, E1>>;
+
+    /// Initiate a new connection.
+    ///
+    /// This method is given access to the global service (`&self`), which may provide
+    /// handles to connection pools, thread pools, or other global data.
+    fn connect(&self) -> Self::ConnectionFuture;
+
     /// The async computation for producing the response.
     ///
     /// Returning an error will result in the server immediately dropping
     /// the connection. It is usually preferable to instead return an HTTP response
     /// with an error status code.
-    type ResponseFuture: Send + 'static + Future<Output = Result<Response, E>>;
+    type ResponseFuture: Send + 'static + Future<Output = Result<Response, E2>>;
 
     /// Begin handling a single request.
     ///
     /// The handler is given shared access to the service itself, and mutable access
     /// to the state for the connection where the request is taking place.
-    fn respond(&self, req: Request) -> Self::ResponseFuture;
+    fn respond(&self, conn: Self::Connection, req: Request) -> Self::ResponseFuture;
 }
 
-impl<F, R, E> HttpService<E> for F
-where
-    F: Send + Sync + 'static + Fn(Request) -> R,
-    R: Send + 'static + Future<Output = Result<Response, E>>,
-{
-    type ResponseFuture = R;
-    fn respond(&self, req: Request) -> Self::ResponseFuture {
-        (self)(req)
-    }
-}
+// impl<F, R, E> HttpService<E> for F
+// where
+//     F: Send + Sync + 'static + Fn(Request) -> R,
+//     R: Send + 'static + Future<Output = Result<Response, E>>,
+// {
+//     type ResponseFuture = R;
+//     fn respond(&self, req: Request) -> Self::ResponseFuture {
+//         (self)(req)
+//     }
+// }

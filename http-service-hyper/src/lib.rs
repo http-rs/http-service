@@ -6,23 +6,22 @@
 #![cfg_attr(test, deny(warnings))]
 
 #[cfg(feature = "runtime")]
+use futures::compat::{Compat as Compat03As01, Compat01As03};
 use futures::compat::Future01CompatExt;
-use futures::{
-    compat::{Compat, Compat01As03},
-    future::BoxFuture,
-    prelude::*,
-    stream,
-    task::Spawn,
-};
+use futures::future::BoxFuture;
+use futures::prelude::*;
+use futures::stream;
+use futures::task::Spawn;
 use http_service::{Body, HttpService};
 use hyper::server::{Builder as HyperBuilder, Server as HyperServer};
+use std::marker::PhantomData;
+
 #[cfg(feature = "runtime")]
 use std::net::SocketAddr;
-use std::{
-    pin::Pin,
-    sync::Arc,
-    task::{self, Poll},
-};
+use std::pin::Pin;
+use std::sync::Arc;
+use std::task::{self, Context, Poll};
+use std::io;
 
 // Wrapper type to allow us to provide a blanket `MakeService` impl
 struct WrapHttpService<H> {
@@ -30,20 +29,20 @@ struct WrapHttpService<H> {
 }
 
 // Wrapper type to allow us to provide a blanket `Service` impl
-struct WrapConnection<H: HttpService> {
+struct WrapConnection<H: HttpService<E1, E2>, E1, E2> {
     service: Arc<H>,
     connection: H::Connection,
 }
 
-impl<H, Ctx> hyper::service::MakeService<Ctx> for WrapHttpService<H>
+impl<H, Ctx, E1, E2> hyper::service::MakeService<Ctx> for WrapHttpService<H, E1, E2>
 where
-    H: HttpService,
+    H: HttpService<E1, E2>,
 {
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
     type Error = std::io::Error;
-    type Service = WrapConnection<H>;
-    type Future = Compat<BoxFuture<'static, Result<Self::Service, Self::Error>>>;
+    type Service = WrapConnection<H, E1, E2>;
+    type Future = Compat03As01<BoxFuture<'static, Result<Self::Service, Self::Error>>>;
     type MakeError = std::io::Error;
 
     fn make_service(&mut self, _ctx: Ctx) -> Self::Future {
@@ -54,6 +53,8 @@ where
             Ok(WrapConnection {
                 service,
                 connection,
+                __error_1: PhantomData,
+                __error_2: PhantomData,
             })
         }
         .boxed()
@@ -61,32 +62,38 @@ where
     }
 }
 
-impl<H> hyper::service::Service for WrapConnection<H>
+impl<H, E1, E2> hyper::service::Service for WrapConnection<H, E1, E2>
 where
-    H: HttpService,
+    H: HttpService<E1, E2>,
 {
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
     type Error = std::io::Error;
-    type Future = Compat<BoxFuture<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
+    type Future = Compat03As01<BoxFuture<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
 
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
+        // Convert Request
         let error = std::io::Error::from(std::io::ErrorKind::Other);
-        let req = req.map(|hyper_body| {
-            let stream = Compat01As03::new(hyper_body).map(|c| match c {
-                Ok(chunk) => Ok(chunk.into_bytes()),
-                Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
-            });
-            Body::from_stream(stream)
+        let req = req.map(|body| {
+            let body_stream = Compat01As03::new(body)
+                .map(|chunk| chunk.map(|chunk| chunk.to_vec()))
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e));
+            let body_reader = body_stream.into_async_read();
+            Body::from_reader(Box::new(body_reader))
         });
-        let fut = self.service.respond(&mut self.connection, req);
 
+        let fut = self.service.respond(self.connection, req);
+
+        // Convert Request
         async move {
             let res: http::Response<_> = fut.into_future().await.map_err(|_| error)?;
-            Ok(res.map(|body| hyper::Body::wrap_stream(body.compat())))
-        }
-        .boxed()
-        .compat()
+
+            let (parts, body) = res.into_parts();
+            let byte_stream = Compat03As01::new(ChunkStream { reader: body });
+            let body = hyper::Body::wrap_stream(byte_stream);
+            let res = hyper::Response::from_parts(parts, body);
+            Ok(res)
+        }.boxed().compat()
     }
 }
 
@@ -99,9 +106,9 @@ where
 pub struct Server<I: TryStream, S, Sp> {
     inner: Compat01As03<
         HyperServer<
-            Compat<stream::MapOk<I, fn(I::Ok) -> Compat<I::Ok>>>,
+            Compat03As01<stream::MapOk<I, fn(I::Ok) -> Compat03As01<I::Ok>>>,
             WrapHttpService<S>,
-            Compat<Sp>,
+            Compat03As01<Sp>,
         >,
     >,
 }
@@ -115,7 +122,7 @@ impl<I: TryStream, S, Sp> std::fmt::Debug for Server<I, S, Sp> {
 /// A builder for a [`Server`].
 #[allow(clippy::type_complexity)] // single-use type with many compat layers
 pub struct Builder<I: TryStream, Sp> {
-    inner: HyperBuilder<Compat<stream::MapOk<I, fn(I::Ok) -> Compat<I::Ok>>>, Compat<Sp>>,
+    inner: HyperBuilder<Compat03As01<stream::MapOk<I, fn(I::Ok) -> Compat03As01<I::Ok>>>, Compat03As01<Sp>>,
 }
 
 impl<I: TryStream, Sp> std::fmt::Debug for Builder<I, Sp> {
@@ -128,8 +135,8 @@ impl<I: TryStream> Server<I, (), ()> {
     /// Starts a [`Builder`] with the provided incoming stream.
     pub fn builder(incoming: I) -> Builder<I, ()> {
         Builder {
-            inner: HyperServer::builder(Compat::new(incoming.map_ok(Compat::new as _)))
-                .executor(Compat::new(())),
+            inner: HyperServer::builder(Compat03As01::new(incoming.map_ok(Compat03As01::new as _)))
+                .executor(Compat03As01::new(())),
         }
     }
 }
@@ -138,7 +145,7 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
     /// Sets the [`Spawn`] to deal with starting connection tasks.
     pub fn with_spawner<Sp2>(self, new_spawner: Sp2) -> Builder<I, Sp2> {
         Builder {
-            inner: self.inner.executor(Compat::new(new_spawner)),
+            inner: self.inner.executor(Compat03As01::new(new_spawner)),
         }
     }
 
@@ -169,7 +176,7 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
     /// // Finally, spawn `server` onto our executor...
     /// pool.run(server)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
-    pub fn serve<S: HttpService>(self, service: S) -> Server<I, S, Sp>
+    pub fn serve<S: HttpService<E1, E2>, E1, E2>(self, service: S) -> Server<I, S, Sp>
     where
         I: TryStream + Unpin,
         I::Ok: AsyncRead + AsyncWrite + Send + Unpin + 'static,
@@ -185,12 +192,12 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
     }
 }
 
-impl<I, S, Sp> Future for Server<I, S, Sp>
+impl<I, S, Sp, E1, E2> Future for Server<I, S, Sp>
 where
     I: TryStream + Unpin,
     I::Ok: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     I::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
-    S: HttpService,
+    S: HttpService<E1, E2>,
     Sp: Clone + Send + 'static,
     for<'a> &'a Sp: Spawn,
 {
@@ -204,7 +211,7 @@ where
 /// Serve the given `HttpService` at the given address, using `hyper` as backend, and return a
 /// `Future` that can be `await`ed on.
 #[cfg(feature = "runtime")]
-pub fn serve<S: HttpService>(
+pub fn serve<S: HttpService<E1, E2>, E1, E2>(
     s: S,
     addr: SocketAddr,
 ) -> impl Future<Output = Result<(), hyper::Error>> {
@@ -217,7 +224,30 @@ pub fn serve<S: HttpService>(
 /// Run the given `HttpService` at the given address on the default runtime, using `hyper` as
 /// backend.
 #[cfg(feature = "runtime")]
-pub fn run<S: HttpService>(s: S, addr: SocketAddr) {
+pub fn run<S: HttpService<E1, E2>, E1, E2>(s: S, addr: SocketAddr) {
     let server = serve(s, addr).map(|_| Result::<_, ()>::Ok(())).compat();
     hyper::rt::run(server);
+}
+
+/// A type that wraps an `AsyncRead` into a `Stream` of `hyper::Chunk`. Used for writing data to a
+/// Hyper response.
+struct ChunkStream<R: AsyncRead> {
+    reader: R,
+}
+
+impl<R: AsyncRead + Unpin> futures::Stream for ChunkStream<R> {
+    type Item = Result<hyper::Chunk, Box<dyn std::error::Error + Send + Sync + 'static>>;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        // This is not at all efficient, but that's okay for now.
+        let mut buf = vec![];
+        let read = futures::ready!(Pin::new(&mut self.reader).poll_read(cx, &mut buf))?;
+        if read == 0 {
+            return Poll::Ready(None);
+        } else {
+            buf.shrink_to_fit();
+            let chunk = hyper::Chunk::from(buf);
+            Poll::Ready(Some(Ok(chunk)))
+        }
+    }
 }
