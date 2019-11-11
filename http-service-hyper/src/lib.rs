@@ -84,12 +84,9 @@ where
         // Convert Request
         async move {
             let res: http::Response<_> = fut.into_future().await.map_err(|_| error)?;
-
             let (parts, body) = res.into_parts();
-            let byte_stream = Compat03As01::new(ChunkStream { reader: body });
-            let body = hyper::Body::wrap_stream(byte_stream);
-            let res = hyper::Response::from_parts(parts, body);
-            Ok(res)
+            let body = hyper::Body::wrap_stream(Compat03As01::new(ChunkStream { body }));
+            Ok(hyper::Response::from_parts(parts, body))
         }.boxed().compat()
     }
 }
@@ -229,7 +226,7 @@ pub fn run<S: HttpService>(s: S, addr: SocketAddr) {
 /// A type that wraps an `AsyncRead` into a `Stream` of `hyper::Chunk`. Used for writing data to a
 /// Hyper response.
 struct ChunkStream<R: AsyncRead> {
-    reader: R,
+    body: R,
 }
 
 impl<R: AsyncRead + Unpin> futures::Stream for ChunkStream<R> {
@@ -237,12 +234,12 @@ impl<R: AsyncRead + Unpin> futures::Stream for ChunkStream<R> {
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         // This is not at all efficient, but that's okay for now.
-        let mut buf = vec![];
-        let read = futures::ready!(Pin::new(&mut self.reader).poll_read(cx, &mut buf))?;
+        let mut buf = vec![0; 1024];
+        let read = futures::ready!(Pin::new(&mut self.body).poll_read(cx, &mut buf))?;
         if read == 0 {
             return Poll::Ready(None);
         } else {
-            buf.shrink_to_fit();
+            buf.truncate(read);
             let chunk = hyper::Chunk::from(buf);
             Poll::Ready(Some(Ok(chunk)))
         }
