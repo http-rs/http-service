@@ -12,7 +12,5 @@ documentation = "https://docs.rs/http-service-mock"
 version = "0.3.1"
 
 [dependencies]
+futures = "0.3.1"
 http-service = { version = "0.3.1", path = ".." }
-
-[dependencies.futures-preview]
-version = "0.3.0-alpha.16"

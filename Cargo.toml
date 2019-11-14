@@ -20,13 +20,11 @@ members = ["http-service-hyper", "http-service-lambda", "http-service-mock"]
 
 [dependencies]
 bytes = "0.4.12"
+futures = "0.3.1"
 http = "0.1.17"
 
 [dev-dependencies]
 http-service-hyper = { version = "0.3.1", path = "./http-service-hyper" }
-
-[dependencies.futures-preview]
-version = "0.3.0-alpha.16"
 
 [patch.crates-io]
 http-service = { path = "." }
