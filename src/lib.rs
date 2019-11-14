@@ -14,9 +14,12 @@ use futures::future::TryFuture;
 use std::fmt;
 use std::pin::Pin;
 
-/// The raw body of an http request or response.
-pub struct Body {
-    reader: Box<dyn Read + Unpin + Send + 'static>,
+pin_project_lite::pin_project! {
+    /// The raw body of an http request or response.
+    pub struct Body {
+        #[pin]
+        reader: Box<dyn BufRead + Unpin + Send + 'static>,
+    }
 }
 
 impl Body {
@@ -28,7 +31,7 @@ impl Body {
     }
 
     /// Create a new instance from a reader.
-    pub fn from_reader(reader: impl Read + Unpin + Send + 'static) -> Self {
+    pub fn from_reader(reader: impl BufRead + Unpin + Send + 'static) -> Self {
         Self {
             reader: Box::new(reader),
         }
@@ -42,6 +45,17 @@ impl Read for Body {
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
         Pin::new(&mut self.reader).poll_read(cx, buf)
+    }
+}
+
+impl BufRead for Body {
+    fn poll_fill_buf(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<&'_ [u8]>> {
+        let this = self.project();
+        this.reader.poll_fill_buf(cx)
+    }
+
+    fn consume(mut self: Pin<&mut Self>, amt: usize) {
+        Pin::new(&mut self.reader).consume(amt)
     }
 }
 
@@ -59,7 +73,7 @@ impl From<Vec<u8>> for Body {
     }
 }
 
-impl<R: Read + Unpin + Send + 'static> From<Box<R>> for Body {
+impl<R: BufRead + Unpin + Send + 'static> From<Box<R>> for Body {
     /// Converts an `AsyncRead` into a Body.
     fn from(reader: Box<R>) -> Self {
         Self { reader }
