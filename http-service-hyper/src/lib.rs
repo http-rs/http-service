@@ -56,8 +56,8 @@ where
                 connection,
             })
         }
-            .boxed()
-            .compat()
+        .boxed()
+        .compat()
     }
 }
 
@@ -85,8 +85,8 @@ where
             let res: http::Response<_> = fut.into_future().await.map_err(|_| error)?;
             Ok(res.map(|body| hyper::Body::wrap_stream(body.compat())))
         }
-            .boxed()
-            .compat()
+        .boxed()
+        .compat()
     }
 }
 
