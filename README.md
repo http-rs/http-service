@@ -13,11 +13,6 @@
     <img src="https://img.shields.io/crates/v/http-service.svg?style=flat-square"
     alt="Crates.io version" />
   </a>
-  <!-- Build Status -->
-  <a href="https://travis-ci.org/rustasync/http-service">
-    <img src="https://img.shields.io/travis/rustasync/http-service.svg?style=flat-square"
-      alt="Build Status" />
-  </a>
   <!-- Downloads -->
   <a href="https://crates.io/crates/http-service">
     <img src="https://img.shields.io/crates/d/http-service.svg?style=flat-square"
