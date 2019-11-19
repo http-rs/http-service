@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        rust: [stable, nightly]
+        rust: [stable]
 
     steps:
     - uses: actions/checkout@master
@@ -52,20 +52,12 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - id: component
-      uses: actions-rs/components-nightly@v1
-      with:
-        component: rustfmt
-
     - uses: actions-rs/toolchain@v1
       with:
           toolchain: stable
           override: true
-
-    - name: setup
-      run: |
-        rustup component add rustfmt
-        rustc --version
+          profile: minimal
+          components: rustfmt
 
     - name: fmt
       run: cargo fmt --all -- --check
