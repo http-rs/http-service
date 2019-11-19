@@ -18,7 +18,7 @@ pin_project_lite::pin_project! {
     /// The raw body of an http request or response.
     pub struct Body {
         #[pin]
-        reader: Box<dyn BufRead + Unpin + Send + 'static>,
+        reader: Pin<Box<dyn BufRead + Send + 'static>>,
     }
 }
 
@@ -26,14 +26,14 @@ impl Body {
     /// Create a new empty body.
     pub fn empty() -> Self {
         Self {
-            reader: Box::new(io::empty()),
+            reader: Box::pin(io::empty()),
         }
     }
 
     /// Create a new instance from a reader.
     pub fn from_reader(reader: impl BufRead + Unpin + Send + 'static) -> Self {
         Self {
-            reader: Box::new(reader),
+            reader: Box::pin(reader),
         }
     }
 }
@@ -68,14 +68,14 @@ impl fmt::Debug for Body {
 impl From<Vec<u8>> for Body {
     fn from(vec: Vec<u8>) -> Body {
         Self {
-            reader: Box::new(io::Cursor::new(vec)),
+            reader: Box::pin(io::Cursor::new(vec)),
         }
     }
 }
 
-impl<R: BufRead + Unpin + Send + 'static> From<Box<R>> for Body {
+impl<R: BufRead + Unpin + Send + 'static> From<Pin<Box<R>>> for Body {
     /// Converts an `AsyncRead` into a Body.
-    fn from(reader: Box<R>) -> Self {
+    fn from(reader: Pin<Box<R>>) -> Self {
         Self { reader }
     }
 }

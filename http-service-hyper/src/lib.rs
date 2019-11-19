@@ -76,7 +76,7 @@ where
                 .map(|chunk| chunk.map(|chunk| chunk.to_vec()))
                 .map_err(|e| io::Error::new(io::ErrorKind::Other, e));
             let body_reader = body_stream.into_async_read();
-            Body::from_reader(Box::new(body_reader))
+            Body::from_reader(body_reader)
         });
 
         let fut = self.service.respond(&mut self.connection, req);
