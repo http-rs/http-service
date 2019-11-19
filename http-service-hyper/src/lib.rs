@@ -5,9 +5,9 @@
 #![warn(missing_docs, missing_doc_code_examples)]
 #![cfg_attr(test, deny(warnings))]
 
+use futures::compat::Future01CompatExt;
 #[cfg(feature = "runtime")]
 use futures::compat::{Compat as Compat03As01, Compat01As03};
-use futures::compat::Future01CompatExt;
 use futures::future::BoxFuture;
 use futures::prelude::*;
 use futures::stream;
@@ -15,12 +15,12 @@ use futures::task::Spawn;
 use http_service::{Body, HttpService};
 use hyper::server::{Builder as HyperBuilder, Server as HyperServer};
 
+use std::io;
 #[cfg(feature = "runtime")]
 use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{self, Context, Poll};
-use std::io;
 
 // Wrapper type to allow us to provide a blanket `MakeService` impl
 struct WrapHttpService<H> {
@@ -33,14 +33,14 @@ struct WrapConnection<H: HttpService> {
     connection: H::Connection,
 }
 
-impl<H, Ctx, > hyper::service::MakeService<Ctx> for WrapHttpService<H, >
+impl<H, Ctx> hyper::service::MakeService<Ctx> for WrapHttpService<H>
 where
     H: HttpService,
 {
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
     type Error = std::io::Error;
-    type Service = WrapConnection<H, >;
+    type Service = WrapConnection<H>;
     type Future = Compat03As01<BoxFuture<'static, Result<Self::Service, Self::Error>>>;
     type MakeError = std::io::Error;
 
@@ -59,14 +59,15 @@ where
     }
 }
 
-impl<H, > hyper::service::Service for WrapConnection<H, >
+impl<H> hyper::service::Service for WrapConnection<H>
 where
     H: HttpService,
 {
     type ReqBody = hyper::Body;
     type ResBody = hyper::Body;
     type Error = std::io::Error;
-    type Future = Compat03As01<BoxFuture<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
+    type Future =
+        Compat03As01<BoxFuture<'static, Result<http::Response<hyper::Body>, Self::Error>>>;
 
     fn call(&mut self, req: http::Request<hyper::Body>) -> Self::Future {
         // Convert Request
@@ -87,7 +88,9 @@ where
             let (parts, body) = res.into_parts();
             let body = hyper::Body::wrap_stream(Compat03As01::new(ChunkStream { body }));
             Ok(hyper::Response::from_parts(parts, body))
-        }.boxed().compat()
+        }
+        .boxed()
+        .compat()
     }
 }
 
@@ -116,7 +119,10 @@ impl<I: TryStream, S, Sp> std::fmt::Debug for Server<I, S, Sp> {
 /// A builder for a [`Server`].
 #[allow(clippy::type_complexity)] // single-use type with many compat layers
 pub struct Builder<I: TryStream, Sp> {
-    inner: HyperBuilder<Compat03As01<stream::MapOk<I, fn(I::Ok) -> Compat03As01<I::Ok>>>, Compat03As01<Sp>>,
+    inner: HyperBuilder<
+        Compat03As01<stream::MapOk<I, fn(I::Ok) -> Compat03As01<I::Ok>>>,
+        Compat03As01<Sp>,
+    >,
 }
 
 impl<I: TryStream, Sp> std::fmt::Debug for Builder<I, Sp> {
@@ -170,7 +176,7 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
     /// // Finally, spawn `server` onto our executor...
     /// pool.run(server)?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
-    pub fn serve<S: HttpService, >(self, service: S) -> Server<I, S, Sp>
+    pub fn serve<S: HttpService>(self, service: S) -> Server<I, S, Sp>
     where
         I: TryStream + Unpin,
         I::Ok: AsyncRead + AsyncWrite + Send + Unpin + 'static,
@@ -186,7 +192,7 @@ impl<I: TryStream, Sp> Builder<I, Sp> {
     }
 }
 
-impl<I, S, Sp, > Future for Server<I, S, Sp>
+impl<I, S, Sp> Future for Server<I, S, Sp>
 where
     I: TryStream + Unpin,
     I::Ok: AsyncRead + AsyncWrite + Send + Unpin + 'static,
@@ -205,7 +211,7 @@ where
 /// Serve the given `HttpService` at the given address, using `hyper` as backend, and return a
 /// `Future` that can be `await`ed on.
 #[cfg(feature = "runtime")]
-pub fn serve<S: HttpService, >(
+pub fn serve<S: HttpService>(
     s: S,
     addr: SocketAddr,
 ) -> impl Future<Output = Result<(), hyper::Error>> {
