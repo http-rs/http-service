@@ -4,7 +4,7 @@ authors = [
   "Yoshua Wuyts <yoshuawuyts@gmail.com>",
   "Kan-Ru Chen <kanru@kanru.info>",
 ]
-description = "HttpService server that AWS Lambda Rust Runtime as backend"
+description = "HttpService server that uses AWS Lambda Rust Runtime as backend"
 documentation = "https://docs.rs/http-service-lambda"
 edition = "2018"
 license = "MIT OR Apache-2.0"
