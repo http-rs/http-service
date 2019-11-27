@@ -13,7 +13,7 @@ readme = "README.md"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service"
-version = "0.3.1"
+version = "0.4.0"
 
 [workspace]
 members = ["http-service-hyper", "http-service-lambda", "http-service-mock"]
@@ -25,11 +25,5 @@ http = "0.1.17"
 async-std = { version = "1.0.1", default-features = false, features = ["std"] }
 pin-project-lite = "0.1.0"
 
-[dev-dependencies]
-http-service-hyper = { version = "0.3.1", path = "./http-service-hyper" }
-
-[patch.crates-io]
-http-service = { path = "." }
-http-service-hyper = { path = "./http-service-hyper" }
-http-service-mock = { path = "./http-service-mock" }
-tide = { git = "https://github.com/rustasync/tide", branch = "master" }
+# [dev-dependencies]
+# http-service-hyper = { version = "0.4.0", path = "./http-service-hyper" }
