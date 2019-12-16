@@ -19,7 +19,7 @@
       alt="Download" />
   </a>
   <!-- docs.rs docs -->
-  <a href="https://docs.rs/http-service/0.1.5/http_service">
+  <a href="https://docs.rs/http-service/">
     <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
       alt="docs.rs docs" />
   </a>
@@ -27,7 +27,7 @@
 
 <div align="center">
   <h3>
-    <a href="https://docs.rs/http-service/0.1.5/http_service/">
+    <a href="https://docs.rs/http-service/">
       API Docs
     </a>
     <span> | </span>
