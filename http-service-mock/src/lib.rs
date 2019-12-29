@@ -31,7 +31,7 @@ impl<T: HttpService> TestBackend<T> {
     ) -> Result<Response, <T::ResponseFuture as TryFuture>::Error> {
         block_on(
             self.service
-                .respond(&mut self.connection, req)
+                .respond(self.connection.clone(), req)
                 .into_future(),
         )
     }

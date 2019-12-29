@@ -28,7 +28,7 @@ impl HttpService for Server {
 
     fn respond(&self, _conn: &mut (), _req: http_service::Request) -> Self::ResponseFuture {
         let message = self.message.clone();
-        async move { Ok(Response::new(http_service::Body::from(message))) }.boxed()
+        async move { Ok(Response::from(message)) }.boxed()
     }
 }
 

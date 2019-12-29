@@ -16,14 +16,11 @@ name = "http-service"
 version = "0.4.0"
 
 [workspace]
-members = ["http-service-hyper", "http-service-lambda", "http-service-mock"]
+members = ["http-service-hyper", "http-service-mock", "http-service-h1"]
 
 [dependencies]
-bytes = "0.4.12"
-futures = "0.3.1"
-http = "0.1.17"
-async-std = { version = "1.0.1", default-features = false, features = ["std"] }
-pin-project-lite = "0.1.0"
+http-types = "1.0.1"
+async-std = { version = "1.5.0", default-features = false, features = ["std"] }
 
-# [dev-dependencies]
-# http-service-hyper = { version = "0.4.0", path = "./http-service-hyper" }
+[dev-dependencies]
+http-service-hyper = { version = "0.4.0", path = "./http-service-hyper" }
