@@ -10,7 +10,7 @@ Alternatively, build the example and deploy to lambda manually:
 
     ```sh
     rustup target add x86_64-unknown-linux-musl
-    cargo +nightly build --release --example hello_world --target x86_64-unknown-linux-musl
+    cargo build --release --example hello_world --target x86_64-unknown-linux-musl
     ```
 
 2. Package
