@@ -6,85 +6,21 @@
 #![doc(test(attr(deny(rust_2018_idioms, warnings))))]
 #![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
 
-use async_std::io::{self, prelude::*};
-use async_std::task::{Context, Poll};
-
-use futures::future::TryFuture;
-
-use std::fmt;
+use std::future::Future;
 use std::pin::Pin;
+use std::task::{Context, Poll};
 
-pin_project_lite::pin_project! {
-    /// The raw body of an http request or response.
-    pub struct Body {
-        #[pin]
-        reader: Pin<Box<dyn BufRead + Send + 'static>>,
-    }
-}
-
-impl Body {
-    /// Create a new empty body.
-    pub fn empty() -> Self {
-        Self {
-            reader: Box::pin(io::empty()),
-        }
-    }
-
-    /// Create a new instance from a reader.
-    pub fn from_reader(reader: impl BufRead + Unpin + Send + 'static) -> Self {
-        Self {
-            reader: Box::pin(reader),
-        }
-    }
-}
-
-impl Read for Body {
-    fn poll_read(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        buf: &mut [u8],
-    ) -> Poll<io::Result<usize>> {
-        Pin::new(&mut self.reader).poll_read(cx, buf)
-    }
-}
-
-impl BufRead for Body {
-    fn poll_fill_buf(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<&'_ [u8]>> {
-        let this = self.project();
-        this.reader.poll_fill_buf(cx)
-    }
-
-    fn consume(mut self: Pin<&mut Self>, amt: usize) {
-        Pin::new(&mut self.reader).consume(amt)
-    }
-}
-
-impl fmt::Debug for Body {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Body").field("reader", &"<hidden>").finish()
-    }
-}
-
-impl From<Vec<u8>> for Body {
-    fn from(vec: Vec<u8>) -> Body {
-        Self {
-            reader: Box::pin(io::Cursor::new(vec)),
-        }
-    }
-}
-
-impl<R: BufRead + Unpin + Send + 'static> From<Pin<Box<R>>> for Body {
-    /// Converts an `AsyncRead` into a Body.
-    fn from(reader: Pin<Box<R>>) -> Self {
-        Self { reader }
-    }
-}
+/// The raw body of an http request or response.
+pub type Body = http_types::Body;
 
 /// An HTTP request with a streaming body.
-pub type Request = http::Request<Body>;
+pub type Request = http_types::Request;
 
 /// An HTTP response with a streaming body.
-pub type Response = http::Response<Body>;
+pub type Response = http_types::Response;
+
+/// An HTTP compatible error type.
+pub type Error = http_types::Error;
 
 /// An async HTTP service
 ///
@@ -95,7 +31,10 @@ pub trait HttpService: Send + Sync + 'static {
     ///
     /// This associated type is used to establish and hold any per-connection state
     /// needed by the service.
-    type Connection: Send + 'static;
+    type Connection: Send + 'static + Clone;
+
+    /// Error when trying to connect.
+    type ConnectionError: Into<Error> + Send;
 
     /// A future for setting up an individual connection.
     ///
@@ -104,7 +43,9 @@ pub trait HttpService: Send + Sync + 'static {
     ///
     /// Returning an error will result in the server immediately dropping
     /// the connection.
-    type ConnectionFuture: Send + 'static + TryFuture<Ok = Self::Connection>;
+    type ConnectionFuture: Send
+        + 'static
+        + Future<Output = Result<Self::Connection, Self::ConnectionError>>;
 
     /// Initiate a new connection.
     ///
@@ -112,27 +53,56 @@ pub trait HttpService: Send + Sync + 'static {
     /// handles to connection pools, thread pools, or other global data.
     fn connect(&self) -> Self::ConnectionFuture;
 
+    /// Response error.
+    type ResponseError: Into<Error> + Send;
+
     /// The async computation for producing the response.
     ///
     /// Returning an error will result in the server immediately dropping
     /// the connection. It is usually preferable to instead return an HTTP response
     /// with an error status code.
-    type ResponseFuture: Send + 'static + TryFuture<Ok = Response>;
+    type ResponseFuture: Send + 'static + Future<Output = Result<Response, Self::ResponseError>>;
 
     /// Begin handling a single request.
     ///
     /// The handler is given shared access to the service itself, and mutable access
     /// to the state for the connection where the request is taking place.
-    fn respond(&self, conn: &mut Self::Connection, req: Request) -> Self::ResponseFuture;
+    fn respond(&self, conn: Self::Connection, req: Request) -> Self::ResponseFuture;
 }
 
-// impl<F, R, E> HttpService<E> for F
-// where
-//     F: Send + Sync + 'static + Fn(Request) -> R,
-//     R: Send + 'static + Future<Output = Result<Response, E>>,
-// {
-//     type ResponseFuture = R;
-//     fn respond(&self, req: Request) -> Self::ResponseFuture {
-//         (self)(req)
-//     }
-// }
+impl<F, R, E> HttpService for F
+where
+    F: Send + Sync + 'static + Fn(Request) -> R,
+    R: Send + 'static + Future<Output = Result<Response, E>>,
+    E: Send + Into<Error>,
+{
+    type Connection = ();
+    type ConnectionError = Error;
+    type ConnectionFuture = OkFuture;
+    type ResponseFuture = R;
+    type ResponseError = E;
+
+    fn connect(&self) -> Self::ConnectionFuture {
+        OkFuture(true)
+    }
+
+    fn respond(&self, _conn: Self::Connection, req: Request) -> Self::ResponseFuture {
+        (self)(req)
+    }
+}
+
+/// A future which resolves to `Ok(())`.
+#[derive(Debug)]
+pub struct OkFuture(bool);
+
+impl Unpin for OkFuture {}
+
+impl Future for OkFuture {
+    type Output = Result<(), Error>;
+
+    #[inline]
+    fn poll(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+        self.0 = false;
+        Poll::Ready(Ok(()))
+    }
+}

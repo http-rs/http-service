@@ -8,14 +8,15 @@ description = "HttpService server that uses Hyper as backend"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service-hyper"
-repository = "https://github.com/rustasync/http-service"
+repository = "https://github.com/http-rs/http-service"
 documentation = "https://docs.rs/http-service-hyper"
 version = "0.4.1"
 
 [dependencies]
-http = "0.1"
+http = "0.2"
 http-service = { version = "0.4.0", path = ".." }
-hyper = { version = "0.12.27", default-features = false }
+hyper = { version = "0.13.1", default-features = false, features = ["stream"] }
+http-types = { version = "1.0.1", features = ["hyperium_http"] }
 
 [dependencies.futures]
 features = ["compat", "io-compat"]
@@ -26,4 +27,4 @@ default = ["runtime"]
 runtime = ["hyper/runtime"]
 
 [dev-dependencies]
-romio = "0.3.0-alpha.8"
+async-std = "1.5.0"
