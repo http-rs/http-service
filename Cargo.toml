@@ -16,11 +16,8 @@ name = "http-service"
 version = "0.4.0"
 
 [workspace]
-members = ["http-service-hyper", "http-service-mock", "http-service-h1"]
+members = ["http-service-mock", "http-service-h1"]
 
 [dependencies]
 http-types = "1.0.1"
 async-std = { version = "1.5.0", default-features = false, features = ["std"] }
-
-[dev-dependencies]
-http-service-hyper = { version = "0.4.0", path = "./http-service-hyper" }
