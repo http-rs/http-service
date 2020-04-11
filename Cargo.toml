@@ -1,5 +1,5 @@
 [package]
-authors = ["Aaron Turon <aturon@mozilla.com>"]
+authors = ["Aaron Turon <aturon@mozilla.com>", "Yoshua Wuyts <yoshuawuyts@gmail.com>"]
 description = "Types and traits for standardizing async HTTP services"
 repository = "https://github.com/rustasync/http-service"
 documentation = "https://docs.rs/http-service"
@@ -13,7 +13,7 @@ readme = "README.md"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 name = "http-service"
-version = "0.4.0"
+version = "0.5.0"
 
 [workspace]
 members = ["http-service-mock", "http-service-h1"]

@@ -9,8 +9,8 @@ license = "MIT OR Apache-2.0"
 name = "http-service-mock"
 repository = "https://github.com/http-rs/http-service"
 documentation = "https://docs.rs/http-service-mock"
-version = "0.4.0"
+version = "0.5.0"
 
 [dependencies]
 futures = "0.3.1"
-http-service = { version = "0.4.0", path = ".." }
+http-service = { version = "0.5.0", path = ".." }
