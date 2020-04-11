@@ -93,12 +93,11 @@ where
         let conn = conn.clone();
         let service = service.clone();
         async move {
-            let resp = service
+            let res = service
                 .respond(conn, req)
                 .await
                 .map_err(|_| io::Error::from(io::ErrorKind::Other))?;
-
-            Ok(resp)
+            Ok(res)
         }
         .await
     })
