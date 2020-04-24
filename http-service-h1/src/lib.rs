@@ -96,10 +96,12 @@ where
         req.local_addr = stream.0.local_addr().ok();
 
         async move {
-            let res = service
+            let mut res = service
                 .respond(conn, req)
                 .await
                 .map_err(|_| io::Error::from(io::ErrorKind::Other))?;
+            res.peer_addr = req.peer_addr.clone();
+            res.local_addr = req.local_addr.clone();
             Ok(res)
         }
         .await
