@@ -92,6 +92,9 @@ where
     async_h1::accept(&addr, stream.clone(), |req| async {
         let conn = conn.clone();
         let service = service.clone();
+        req.peer_addr = stream.0.peer_addr().ok();
+        req.local_addr = stream.0.local_addr().ok();
+
         async move {
             let res = service
                 .respond(conn, req)
