@@ -92,8 +92,8 @@ where
     async_h1::accept(&addr, stream.clone(), |req| async {
         let conn = conn.clone();
         let service = service.clone();
-        req.peer_addr = stream.0.peer_addr().ok();
-        req.local_addr = stream.0.local_addr().ok();
+        req.peer_addr = stream.0.peer_addr().map(|socket| socket.to_string()).ok();
+        req.local_addr = stream.0.local_addr().map(|socket| socket.to_string()).ok();
 
         async move {
             let mut res = service
