@@ -78,7 +78,7 @@ where
                     }
                 };
 
-                let res = async_h1::accept(&server.addr, stream.clone(), |req| async {
+                let res = async_h1::accept(&server.addr, stream, |req| async {
                     let conn = server.service.connect().await.map_err(Into::into)?;
                     server.service.respond(conn, req).await.map_err(Into::into)
                 })
