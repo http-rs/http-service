@@ -89,11 +89,11 @@ where
         .await
         .map_err(|_| io::Error::from(io::ErrorKind::Other))?;
 
-    async_h1::accept(&addr, stream.clone(), |req| async {
+    async_h1::accept(&addr, stream.clone(), |mut req| async {
         let conn = conn.clone();
         let service = service.clone();
-        req.peer_addr = stream.0.peer_addr().map(|socket| socket.to_string()).ok();
-        req.local_addr = stream.0.local_addr().map(|socket| socket.to_string()).ok();
+        req.set_peer_addr(stream.0.peer_addr().ok());
+        req.set_local_addr(stream.0.local_addr().ok());
 
         async move {
             let res = service
