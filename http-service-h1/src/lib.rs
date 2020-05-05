@@ -6,30 +6,31 @@
 #![cfg_attr(test, deny(warnings))]
 
 use std::future::Future;
-use std::pin::Pin;
-use std::task::{Context, Poll};
 
 use http_service::{Error, HttpService};
 
-use async_std::io;
-use async_std::net::{SocketAddr, TcpStream};
+use async_std::io::{self, Read, Write};
+use async_std::net::SocketAddr;
 use async_std::prelude::*;
 use async_std::stream::Stream;
 use async_std::sync::Arc;
+use async_std::task::{Context, Poll};
+use std::pin::Pin;
 
 /// A listening HTTP server that accepts connections in HTTP1.
 #[derive(Debug)]
 pub struct Server<I, S: HttpService> {
     incoming: I,
     service: Arc<S>,
-    addr: String,
 }
 
-impl<I: Stream<Item = io::Result<TcpStream>>, S: HttpService> Server<I, S>
+impl<I, RW, S> Server<I, S>
 where
+    S: HttpService,
     <<S as HttpService>::ResponseFuture as Future>::Output: Send,
     <S as HttpService>::Connection: Sync,
-    I: Unpin + Send + Sync,
+    RW: Read + Write + Clone + Unpin + Send + Sync + 'static,
+    I: Stream<Item = io::Result<RW>> + Unpin + Send + Sync,
 {
     /// Consume this [`Builder`], creating a [`Server`].
     ///
@@ -49,24 +50,23 @@ where
     ///     // Then bind, configure the spawner to our pool, and serve...
     ///     let mut listener = TcpListener::bind("127.0.0.1:3000").await?;
     ///     let addr = format!("http://{}", listener.local_addr()?);
-    ///     let mut server = Server::new(addr, listener.incoming(), service);
+    ///     let mut server = Server::new(listener.incoming(), service);
     ///     server.run().await?;
     ///     Ok::<(), Box<dyn std::error::Error>>(())
     /// })?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
-    pub fn new(addr: String, incoming: I, service: S) -> Self {
+    pub fn new(incoming: I, service: S) -> Self {
         Server {
             service: Arc::new(service),
             incoming,
-            addr,
         }
     }
 
     /// Run the server forever-ish.
     pub async fn run(&mut self) -> io::Result<()> {
-        while let Some(stream) = self.incoming.next().await {
-            let stream = stream?;
-            async_std::task::spawn(accept(self.addr.clone(), self.service.clone(), stream));
+        while let Some(read_write) = self.incoming.next().await {
+            let read_write = read_write?;
+            async_std::task::spawn(accept(self.service.clone(), read_write));
         }
 
         Ok(())
@@ -74,22 +74,20 @@ where
 }
 
 /// Accept a new connection.
-async fn accept<S>(addr: String, service: Arc<S>, stream: TcpStream) -> Result<(), Error>
+async fn accept<S, RW>(service: Arc<S>, read_write: RW) -> Result<(), Error>
 where
     S: HttpService,
     <<S as HttpService>::ResponseFuture as Future>::Output: Send,
     <S as HttpService>::Connection: Sync,
+    RW: Read + Write + Unpin + Clone + Send + Sync + 'static,
 {
-    // TODO: Delete this line when we implement `Clone` for `TcpStream`.
-    let stream = WrapStream(Arc::new(stream));
-
     let conn = service
         .clone()
         .connect()
         .await
         .map_err(|_| io::Error::from(io::ErrorKind::Other))?;
 
-    async_h1::accept(&addr, stream.clone(), |req| async {
+    async_h1::accept(read_write, |req| async {
         let conn = conn.clone();
         let service = service.clone();
         async move {
@@ -114,16 +112,25 @@ where
     <S as HttpService>::Connection: Sync,
 {
     let listener = async_std::net::TcpListener::bind(addr).await?;
-    let addr = format!("http://{}", listener.local_addr()?); // TODO: https
-    let mut server = Server::<_, S>::new(addr, listener.incoming(), service);
+    let mut server = Server::<_, S>::new(listener.incoming(), service);
 
     server.run().await
 }
 
-#[derive(Clone)]
-struct WrapStream(Arc<TcpStream>);
+#[derive(Clone, Debug)]
+#[allow(missing_docs)]
+pub struct UnixStreamWrapper(Arc<async_std::os::unix::net::UnixStream>);
 
-impl io::Read for WrapStream {
+impl UnixStreamWrapper {
+    #[allow(missing_docs)]
+    pub fn stream_from_incoming<'a>(
+        incoming: async_std::os::unix::net::Incoming<'a>,
+    ) -> impl Stream<Item = io::Result<UnixStreamWrapper>> + 'a {
+        incoming.map(|r| r.map(|io| UnixStreamWrapper(Arc::new(io))))
+    }
+}
+
+impl async_std::io::Read for UnixStreamWrapper {
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -133,7 +140,7 @@ impl io::Read for WrapStream {
     }
 }
 
-impl io::Write for WrapStream {
+impl io::Write for UnixStreamWrapper {
     fn poll_write(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
