@@ -39,6 +39,11 @@
 
 ## About
 
+__This crate has been deprecated. We recommend implementing inherent methods
+such as Tide's
+[`Server::respond`](https://docs.rs/tide/0.11.0/tide/struct.Server.html#method.respond)
+method instead.__
+
 The crate `http-service` provides the necessary types and traits to implement
 your own HTTP Server.
 
